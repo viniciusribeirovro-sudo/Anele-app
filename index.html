@@ -77,9 +77,11 @@ hr{border:0;border-top:1px solid var(--ln);margin:14px 0}
 .sp-p{background:#8a6b2e}.sp-a{background:#3a6ea5}.sp-c{background:#3d7a5e}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px}header h1{min-width:0}.ib{background:none;border:0;color:inherit;padding:8px;border-radius:12px;flex:none}.ib .ic{width:26px;height:26px}nav button{font-size:min(.78rem,11px);line-height:1.1;position:relative;padding:8px 0}.bdg{position:absolute;top:3px;left:52%;background:#d0665a;color:#fff;font-style:normal;font-size:.65rem;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
 [hidden]{display:none!important}.upd{position:fixed;left:10px;right:10px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:100;border-radius:16px;background:#05572a;color:#fff;padding:12px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;box-shadow:0 6px 20px rgba(0,0,0,.3)}.upd span{flex:1}.upd .chip{padding:7px 14px;color:#05572a;background:#fff;border-color:#fff}.upd .chip.on{background:#6a9b35;color:#fff;border-color:#6a9b35}.upd.blk{left:0;right:0;top:0;bottom:0;border-radius:0;background:rgba(5,87,42,.98);flex-direction:column;justify-content:center;text-align:center;padding:30px}.upd.blk .bp{max-width:320px;background:#fff;color:#05572a}
+.lic{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 16px;background:#8a6b2e;color:#fff;font-size:.92rem}.lic.red{background:#8e4a42}.lic .chip{flex:none;padding:7px 14px;background:#fff;color:#1a3626;border-color:#fff}.lic.blk{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--ink);padding:24px;overflow:auto}.lcb{width:100%;max-width:420px}.lcb h2{margin:0 0 8px}.lpx{background:var(--cd);border:1px solid var(--ln);border-radius:12px;padding:12px;word-break:break-all;margin-top:6px;font-family:ui-monospace,monospace}#ts{z-index:300}
 </style>
 </head>
 <body>
+<div id="lic" class="lic" hidden></div>
 <div id="upd" class="upd" hidden></div>
 <div id="app"></div>
 <div id="md" hidden></div>

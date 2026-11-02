@@ -1,0 +1,16 @@
+{
+  "padrao": {
+    "suporte": "5516981203204",
+    "pix": "16981203204",
+    "tolerancia": 5,
+    "aviso": 5
+  },
+  "clientes": {
+    "horta-d0769": {
+      "nome": "Horta",
+      "ate": "2026-12-02",
+      "bloqueado": false,
+      "msg": ""
+    }
+  }
+}

@@ -90,7 +90,7 @@ function R(){if(!me){login();return}if(!ready()){$("app").innerHTML='<header><h1
 var t=[["home","Início","home"],["ord","Pedidos","list"],["sep","Separar","check"],["prod","Produtos","box"],["cust","Clientes","users"]];if(G()){t.splice(2,0,["site","Site","globe"]);t.push(["cash","Financeiro","wallet"])}
 var fb={ord:"no",prod:"np",cust:"nc2",cash:"nl",users:"nu"}[tab];if(tab!="ord"&&!G())fb=0;
 $("app").innerHTML='<header><h1>'+T[tab]+(navigator.onLine?'':' <span class="m" style="font-size:.9rem">· offline</span>')+'</h1>'+(tab=="home"?'<button class="ib" data-a="tab" data-i="cfg" aria-label="Configurações">'+ic("gear")+'</button>':'')+'</header><main>'+(RU?BAN:"")+V[tab]()+'</main>'+(fb?'<button class="fab" data-a="'+fb+'" aria-label="Novo">'+ic("plus")+'</button>':'')+'<nav>'+t.map(function(x){return'<button class="'+(tab==x[0]?"on":"")+'" data-a="tab" data-i="'+x[0]+'">'+ic(x[2])+'<span>'+x[1]+'</span>'+(x[0]=="site"&&webNovos()?'<i class="bdg">'+webNovos()+'</i>':'')+'</button>'}).join("")+'</nav>'}
-function login(){$("app").innerHTML='<div class="lg"><h1>Admin Loja</h1><p class="m" style="margin-bottom:24px">Entre para continuar.</p><label>Usuário<input id="lu" autocapitalize="none" autocomplete="username"></label><label>Senha<input id="lp" type="password" autocomplete="current-password"></label><button class="bp" id="lb">Entrar</button><div id="fs"></div><p class="m" style="text-align:center;margin-top:24px">Versão '+APPN+'</p></div>';
+function login(){$("app").innerHTML='<div class="lg"><h1>Admin Loja</h1><p class="m" style="margin-bottom:24px">Entre para continuar.</p><label>Usuário<input id="lu" autocapitalize="none" autocomplete="username"></label><label>Senha<input id="lp" type="password" autocomplete="current-password"></label><button class="bp" id="lb">Entrar</button><div id="fs"></div><button class="bp ol" data-a="sup">Falar com o suporte</button><p class="m" style="text-align:center;margin-top:24px">Versão '+APPN+'</p></div>';
 $("lb").onclick=doLogin;$("lp").onkeydown=function(e){if(e.key=="Enter")doLogin()};
 FS.getDoc(dref("meta","setup")).then(function(s){var e=$("fs");if(e&&!s.exists()&&!me)e.innerHTML='<p class="m">Nenhum administrador criado ainda.</p><button class="bp ac" data-a="su">Criar administrador</button>'}).catch(function(){})}
 
@@ -472,7 +472,7 @@ function crow(i0,t,sub,a,i){return'<button class="c r tap" data-a="'+a+'"'+(i?' 
 V.cfg=function(){var ad=me.r=="admin",h='<p class="m" style="margin:0 0 6px">'+esc(me.n)+' · '+me.r+'</p>'+sec_n("Aparência")+'<div class="c"><b>Tamanho do texto</b><div class="tb" style="margin:12px 0 8px;flex-wrap:wrap">'+[["p","Pequeno"],["n","Normal"],["g","Grande"],["x","Extra grande"]].map(function(x){return'<button class="chip'+(PF.fs==x[0]?" on":"")+'" data-a="fz" data-i="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div><div class="m">Vale só para o seu usuário e fica salvo.</div></div>';
 if(G())h+=sec_n("Gestão")+crow("list","Relatórios","Vendas e entregas por período","tab","rel")+crow("globe","Loja online","Site, entrega e catálogo","tab","loja")+crow("cat","Categorias de produtos","Criar, renomear, unificar e excluir","tab","cat")+crow("pdf","Catálogo em PDF","","pc")+crow("chat","Catálogo no WhatsApp","","wk");
 if(ad)h+=sec_n("Administração")+crow("users","Usuários","Criar, editar e excluir","tab","users")+crow("shield","Permissões","Quem pode fazer o quê","tab","perm")+crow("check","Histórico de atividades","Auditoria","tab","aud")+crow("share","Backup","Copiar os dados","bk")+crow("box","Restaurar backup","","rs");
-return h+updSec()+sec_n("Conta")+'<button class="bp ol dg" data-a="out">Sair</button>'};
+return h+updSec()+licSec()+sec_n("Suporte")+crow("chat","Falar com o suporte","Dúvidas ou problemas, pelo WhatsApp","sup")+sec_n("Conta")+'<button class="bp ol dg" data-a="out">Sair</button>'};
 V.perm=function(){var Y="✔",N="—",rows=[["Criar pedidos e separar",Y,Y,Y],["Editar, cancelar e excluir pedidos",Y,Y,N],["Produtos, preços e estoque",Y,Y,"só baixa por venda"],["Custos, margens e markup",Y,Y,N],["Clientes e categorias",Y,Y,N],["Financeiro e relatórios",Y,Y,N],["Usuários e permissões",Y,N,N],["Histórico de atividades",Y,N,N],["Backup e restauração",Y,N,N]];
 return'<button class="chip on" data-a="tab" data-i="cfg">← Configurações</button><p class="m" style="margin-top:12px">Estas regras são aplicadas pelo servidor (Firebase), não só escondidas na tela. Para mudar o perfil de alguém, abra Usuários e toque no usuário.</p><div class="c" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><tr><th style="text-align:left;padding:6px 4px">Ação</th><th>Adm.</th><th>Ger.</th><th>Vend.</th></tr>'+rows.map(function(r){return'<tr>'+r.map(function(c,k){return'<td style="padding:8px 4px;border-top:1px solid var(--ln);'+(k?'text-align:center;':'')+'">'+c+'</td>'}).join("")+'</tr>'}).join("")+'</table></div><button class="bp" data-a="tab" data-i="users">Gerenciar usuários</button>'};
 /* ----- categorias (administração) ----- */
@@ -583,7 +583,7 @@ var k=0;(function nx(){if(k>=ops.length){SYN=0;if(manual)toast("Catálogo public
 function autoSync(){if(!G()||RU||SYN||!LJ.pub||Date.now()-LASTSYN<30000)return;clearTimeout(STM);STM=setTimeout(function(){syncCat(false)},2500)}
 
 /* ===== v4.1: atualização do aplicativo pela internet (sem baixar APK) ===== */
-var APPV=4001,APPN="4.1",UP={latest:null,min:+(function(){try{return localStorage.getItem("anele_minb")}catch(e){return 0}})()||0,waiting:false,dismissed:false,busy:false,go:false};
+var APPV=4002,APPN="4.2",UP={latest:null,min:+(function(){try{return localStorage.getItem("anele_minb")}catch(e){return 0}})()||0,waiting:false,dismissed:false,busy:false,go:false};
 function updMin(){return Math.max(UP.min||0,(UP.latest&&UP.latest.min)||0)}
 function updAvail(){return!!(UP.latest&&UP.latest.build>APPV)||UP.waiting}
 function updUi(){var e=$("upd");if(!e)return;var mand=APPV<updMin();
@@ -617,3 +617,61 @@ if(String(firebaseConfig.apiKey).indexOf("COLE")==0)$("app").innerHTML='<div cla
 else{$("app").innerHTML='<p class="m" style="text-align:center;padding-top:40vh">Carregando…</p>';
 AU.onAuthStateChanged(auth,function(u){if(BUSY)return;if(!u){unsub();me=null;PF={fs:"n",fav:[]};applyFs();GENDONE=0;R();return}enter(u)})}
 
+/* ===== Suporte e cobrança (licença) =====
+   O vencimento de cada cliente fica no arquivo licencas.json, que só você controla (LIC_URL).
+   O cliente é identificado pelo projectId do Firebase dele. */
+var LIC_URL="https://viniciusribeirovro-sudo.github.io/Anele-app/licencas.json",SUP0="",
+LIC={est:"livre",d:null,tol:5,nome:"",sup:"",pix:"",val:null,msg:"",ate:"",busy:0};
+function lcLS(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+function brDate(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||"");return m?m[3]+"/"+m[2]+"/"+m[1]:String(s||"")}
+function licCalc(raw,pid,now){
+var pad=(raw&&raw.padrao)||{},ent=(raw&&raw.clientes&&raw.clientes[pid])||null,
+o={est:"livre",d:null,tol:5,nome:"",sup:"",pix:"",val:null,msg:"",ate:""};
+o.sup=String((ent&&ent.suporte)||pad.suporte||SUP0||"").replace(/\D/g,"");if(o.sup.length<10)o.sup="";
+o.pix=String((ent&&ent.pix)||pad.pix||"");
+if(!ent)return o;
+o.nome=ent.nome||"";o.val=ent.valor==null?null:+ent.valor;o.msg=ent.msg||"";o.ate=ent.ate||"";
+var tol=ent.tolerancia!=null?+ent.tolerancia:(pad.tolerancia!=null?+pad.tolerancia:5),
+av=ent.aviso!=null?+ent.aviso:(pad.aviso!=null?+pad.aviso:5);o.tol=tol;
+if(ent.bloqueado===true){o.est="bloq";return o}
+var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(o.ate);
+if(!m){o.est="ok";return o}
+var x=new Date(now),hoje0=new Date(x.getFullYear(),x.getMonth(),x.getDate()).getTime(),
+d=Math.round((new Date(+m[1],+m[2]-1,+m[3]).getTime()-hoje0)/864e5);
+o.d=d;o.est=d<(-tol)?"bloq":d<0?"venc":d<=av?"aviso":"ok";
+return o}
+async function licCheck(manual){
+if(LIC.busy)return;LIC.busy=1;
+var pid=String(firebaseConfig.projectId||""),raw=null,rede=true;
+try{var r=await fetch(LIC_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;raw=await r.json();lcLS("lic_raw",JSON.stringify(raw))}
+catch(e){rede=false;try{raw=JSON.parse(lcLS("lic_raw")||"null")}catch(x){raw=null}}
+Object.assign(LIC,licCalc(raw,pid,Date.now()));LIC.busy=0;licUi();
+if(manual)toast(rede?"Licença verificada.":"Sem conexão com o servidor de licença. Usando o último status salvo.")}
+function licPay(){var h="";
+if(LIC.val!=null)h+='<div class="r" style="margin-top:8px"><span class="m">Valor</span><b>'+brl(LIC.val)+'</b></div>';
+if(LIC.ate)h+='<div class="r" style="margin-top:8px"><span class="m">Vencimento</span><b>'+brDate(LIC.ate)+'</b></div>';
+if(LIC.pix)h+='<div class="m" style="margin-top:14px">Chave Pix</div><div class="lpx">'+esc(LIC.pix)+'</div><button class="bp" data-a="lcp">Copiar chave Pix</button>';
+return h+'<button class="bp ac" data-a="lsup">'+(LIC.pix?"Enviar comprovante pelo WhatsApp":"Falar com o suporte")+'</button>'}
+function licUi(){var e=$("lic");if(!e)return;var E=LIC.est,adm=!!(me&&me.r=="admin");
+if(E=="bloq"){e.hidden=false;e.className="lic blk";
+e.innerHTML='<div class="lcb"><h2>Acesso suspenso</h2><p class="m">'+esc(LIC.msg||"A mensalidade do aplicativo está em atraso. Regularize o pagamento para voltar a usar.")+'</p>'+licPay()+'<button class="bp ol" data-a="lchk">Já paguei, verificar de novo</button>'+(me?'<button class="bp ol dg" data-a="out">Sair</button>':'')+'</div>';return}
+if(adm&&(E=="aviso"||E=="venc")){
+var t=E=="venc"?"Mensalidade vencida há "+(-LIC.d)+" dia(s). O acesso será bloqueado em "+(LIC.d+LIC.tol+1)+" dia(s).":(LIC.d==0?"Sua mensalidade vence hoje.":"Sua mensalidade vence em "+LIC.d+" dia(s) ("+brDate(LIC.ate)+").");
+e.hidden=false;e.className="lic"+(E=="venc"?" red":"");e.innerHTML='<span>'+t+'</span><button class="chip" data-a="lpay">Pagar</button>';return}
+e.hidden=true;e.className="lic";e.innerHTML=""}
+function licSec(){if(!me||me.r!="admin")return"";var E=LIC.est,s;
+s=E=="livre"?"Sem plano cadastrado (uso liberado)":E=="bloq"?"Suspensa":E=="venc"?"Vencida há "+(-LIC.d)+" dia(s)":LIC.ate?"Ativa até "+brDate(LIC.ate)+(LIC.d>0?" ("+LIC.d+" dia(s))":LIC.d==0?" (vence hoje)":""):"Ativa";
+return sec_n("Licença")+'<div class="c"><div class="r"><b>Mensalidade</b><span style="text-align:right">'+s+'</span></div>'+(LIC.val!=null?'<div class="r" style="margin-top:8px"><span class="m">Valor</span><span>'+brl(LIC.val)+'</span></div>':'')+'<button class="bp ol" data-a="lpay">Como pagar</button><button class="bp ol" data-a="lchk">Verificar agora</button></div>'}
+A.sup=function(){if(!LIC.sup)return toast("O contato do suporte ainda não foi configurado.");
+wa("Olá! Preciso de ajuda com o aplicativo Admin Loja (versão "+APPN+").\nLoja: "+(LIC.nome||firebaseConfig.projectId||"-")+"\nUsuário: "+(me?me.n:"(sem login)")+"\n\nMeu problema: ",LIC.sup)};
+A.lsup=function(){if(!LIC.sup)return toast("O contato do suporte ainda não foi configurado.");
+wa("Olá! Estou enviando o comprovante da mensalidade do Admin Loja.\nLoja: "+(LIC.nome||firebaseConfig.projectId||"-")+(LIC.ate?"\nVencimento: "+brDate(LIC.ate):"")+(LIC.val!=null?"\nValor: "+brl(LIC.val):""),LIC.sup)};
+A.lcp=function(){var t=LIC.pix,ok=false,x=document.createElement("textarea"),bad=function(){toast("Não consegui copiar. Anote a chave exibida na tela.")};
+x.value=t;x.style.cssText="position:fixed;opacity:0";document.body.appendChild(x);x.select();try{ok=document.execCommand("copy")}catch(e){}x.remove();
+if(ok)return toast("Chave Pix copiada.");try{navigator.clipboard.writeText(t).then(function(){toast("Chave Pix copiada.")},bad)}catch(e){bad()}};
+A.lpay=function(){$("sh").innerHTML='<div class="sc"><b class="h" style="font-size:1.2rem">Mensalidade do aplicativo</b>'+licPay()+'<button class="bp ol" data-a="x2">Fechar</button></div>';$("sh").hidden=false};
+A.lchk=function(){licCheck(true)};
+var _R=R;R=function(){_R.apply(this,arguments);licUi()};
+licCheck();setInterval(licCheck,1800000);
+document.addEventListener("visibilitychange",function(){if(!document.hidden)licCheck()});
+window.addEventListener("online",function(){licCheck()});
