@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#05572a"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><title>Admin Loja</title>
+<style>
+:root{--bg:#f4f3f0;--cd:#fff;--ink:#1a3626;--mu:#66736b;--ln:#dcdad3;--ac:#c46545;--pr:#1a3626;--prt:#fff;--gn:#1f6f4a;--av:#dcebe1;--avt:#1a3626;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#141615;--cd:#1b211d;--ink:#eef1ee;--mu:#8e9a92;--ln:#2a382f;--ac:#b96a4b;--pr:#4a7c5f;--prt:#0d1a12;--gn:#5f9f7c;--av:#1f3a2b;--avt:#86c99f}}
+:root[data-theme="dark"]{--bg:#141615;--cd:#1b211d;--ink:#eef1ee;--mu:#8e9a92;--ln:#2a382f;--ac:#b96a4b;--pr:#4a7c5f;--prt:#0d1a12;--gn:#5f9f7c;--av:#1f3a2b;--avt:#86c99f}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{background:var(--cd)}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:1rem/1.4 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+h1,.h,.pt{font-family:"Work Sans",system-ui,-apple-system,"Segoe UI",sans-serif;font-weight:600;margin:0}
+header{background:var(--cd);border-bottom:1px solid var(--ln);padding:18px 20px}
+h1{font-size:1.6rem}
+main{max-width:600px;margin:0 auto;padding:16px 16px 150px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:var(--cd);border-top:1px solid var(--ln);padding:6px 0 env(safe-area-inset-bottom,0px)}
+nav button{flex:1;border:0;background:none;color:var(--mu);padding:8px 2px;font:inherit;font-size:.78rem;display:flex;flex-direction:column;align-items:center;gap:3px}
+nav button.on{color:var(--gn)}
+.ic{width:24px;height:24px;flex:none}
+.fab{position:fixed;right:18px;bottom:calc(82px + env(safe-area-inset-bottom,0px));width:58px;height:58px;border-radius:50%;border:0;background:var(--ac);color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.3)}
+.fab .ic{width:28px;height:28px}
+.c{background:var(--cd);border:1px solid var(--ln);border-radius:18px;padding:16px;margin-bottom:12px}
+.tap{cursor:pointer}
+.tap:active{opacity:.75}
+.r{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.m{color:var(--mu);font-size:.9rem}
+.gn{color:var(--gn)}
+.big{font-size:1.4rem;font-weight:600}
+.gr{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gr .c{margin:0}
+.gr3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px}
+.gr3 .c{padding:12px;margin:0}
+.gr3 .big{font-size:1rem}
+button,select,input,textarea{font:inherit}
+input,select,textarea{width:100%;padding:15px 16px;border:1px solid var(--ln);border-radius:14px;background:var(--cd);color:var(--ink)}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--gn);outline-offset:1px}
+label{display:block;font-size:.9rem;font-weight:600;margin-bottom:16px}
+label input,label select,label textarea{margin-top:8px;font-weight:400}
+.bp{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--pr);color:var(--prt);border:0;border-radius:999px;padding:16px;font-weight:600;margin-top:12px;cursor:pointer}
+.bp.ac{background:var(--ac);color:#fff}
+.bp.ol{background:none;color:var(--gn);border:1px solid var(--ln)}
+.bp.dg{color:#d0665a}
+.pill{display:inline-block;border-radius:999px;padding:6px 18px;font-size:.9rem;color:#fff;text-transform:capitalize;border:0;width:auto;font-weight:500}
+select.pill{appearance:none;-webkit-appearance:none}
+.st-pendente{background:#8a6b2e}.st-pago{background:#3d7a5e}.st-entregue{background:#3a6ea5}.st-cancelado{background:#8e4a42}
+.tb{display:flex;gap:8px;overflow-x:auto;margin-bottom:14px}
+.chip{flex:none;background:var(--cd);color:var(--ink);border:1px solid var(--ln);border-radius:999px;padding:9px 16px;text-transform:capitalize}
+.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.sb{position:relative;margin-bottom:14px}
+.sb .ic{position:absolute;left:16px;top:16px;color:var(--mu);width:22px;height:22px}
+.sb input{padding-left:48px}
+.av{width:48px;height:48px;border-radius:50%;background:var(--av);color:var(--avt);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:1.2rem;flex:none;object-fit:cover}
+.hf{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+.ib{background:none;border:0;color:var(--ink);padding:6px;display:flex}
+.cb{background:none;border:0;color:var(--ac);padding:8px;display:flex}
+.cb .ic{width:30px;height:30px}
+.it{display:flex;align-items:center;gap:14px;min-width:0}
+.it>div{min-width:0}
+hr{border:0;border-top:1px solid var(--ln);margin:14px 0}
+#md{position:fixed;inset:0;z-index:9;background:var(--bg)}
+#md[hidden],#sh[hidden]{display:none}
+.pg{display:flex;flex-direction:column;height:100%;max-width:600px;margin:0 auto}
+.ph{display:flex;gap:10px;align-items:center;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px));background:var(--cd);border-bottom:1px solid var(--ln)}
+.pt{font-size:1.35rem}
+.pb{flex:1;overflow:auto;padding:16px}
+.pf{padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));background:var(--cd);border-top:1px solid var(--ln)}
+.pf .bp{margin-top:0}
+#sh{position:fixed;inset:0;z-index:12;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center}
+.sc{background:var(--cd);width:100%;max-width:600px;border-radius:24px 24px 0 0;padding:20px;padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+#ts{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:999px;z-index:20;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90%;text-align:center}
+#ts.on{opacity:1}
+.lg{max-width:380px;margin:12vh auto 0;padding:20px}
+@media (prefers-reduced-motion:reduce){#ts{transition:none}}
+.sp-p{background:#8a6b2e}.sp-a{background:#3a6ea5}.sp-c{background:#3d7a5e}
+.sp-p{background:#8a6b2e}.sp-a{background:#3a6ea5}.sp-c{background:#3d7a5e}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}header h1{min-width:0}.ib{background:none;border:0;color:inherit;padding:8px;border-radius:12px;flex:none}.ib .ic{width:26px;height:26px}nav button{font-size:min(.78rem,11px);line-height:1.1;position:relative;padding:8px 0}.bdg{position:absolute;top:3px;left:52%;background:#d0665a;color:#fff;font-style:normal;font-size:.65rem;min-width:18px;height:18px;border-radius:9px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+[hidden]{display:none!important}.upd{position:fixed;left:10px;right:10px;bottom:calc(68px + env(safe-area-inset-bottom));z-index:100;border-radius:16px;background:#05572a;color:#fff;padding:12px 14px;display:flex;gap:10px;align-items:center;justify-content:space-between;box-shadow:0 6px 20px rgba(0,0,0,.3)}.upd span{flex:1}.upd .chip{padding:7px 14px;color:#05572a;background:#fff;border-color:#fff}.upd .chip.on{background:#6a9b35;color:#fff;border-color:#6a9b35}.upd.blk{left:0;right:0;top:0;bottom:0;border-radius:0;background:rgba(5,87,42,.98);flex-direction:column;justify-content:center;text-align:center;padding:30px}.upd.blk .bp{max-width:320px;background:#fff;color:#05572a}
+</style>
+</head>
+<body>
+<div id="upd" class="upd" hidden></div>
+<div id="app"></div>
+<div id="md" hidden></div>
+<div id="sh" hidden></div>
+<div id="ts"></div>
+<script type="importmap">{"imports": {"firebase/app": "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js", "firebase/firestore": "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js", "firebase/auth": "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js", "@capacitor/core": "./cap.js", "@capacitor/share": "./cap.js", "@capacitor/filesystem": "./cap.js", "@capacitor/browser": "./cap.js", "@capacitor/app": "./cap.js"}}</script><script type="module" src="app.js"></script>
+</body>
+</html>
