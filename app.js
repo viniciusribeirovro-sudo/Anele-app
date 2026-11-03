@@ -48,7 +48,7 @@ function tot(o){return o.items.reduce(function(s,i){return s+i.q*i.pr},0)+(o.acr
 function cs(){var e=0,s=0;DB.cash.forEach(function(c){c.tp=="entrada"?e+=c.v:s+=c.v});return[e,s]}
 function empty(t){return'<p class="m" style="text-align:center;padding:24px 0">'+t+'</p>'}
 function sb(p){return'<div class="sb">'+ic("search")+'<input data-q="1" placeholder="'+p+'" value="'+esc(Q)+'"></div>'}
-function wa(t,tel){var n=String(tel||"").replace(/\D/g,"");if(n&&n.length<=11)n="55"+n;var u="https://wa.me/"+n+"?text="+encodeURIComponent(t),w=null;if(Capacitor.isNativePlatform()){Browser.open({url:u}).catch(function(){SP(t,u)});return}try{w=window.open(u,"_blank")}catch(e){}if(!w)SP(t,u)}
+function wa(t,tel){var n=String(tel||"").replace(/\D/g,"");if(n&&n.length<=11)n="55"+n;var u="https://wa.me/"+n+"?text="+encodeURIComponent(t),w=null;if(Capacitor.isNativePlatform()){window.location.href=u;return}try{w=window.open(u,"_blank")}catch(e){}if(!w)SP(t,u)}
 function SP(t,u){$("sh").innerHTML='<div class="sc"><b class="h" style="font-size:1.2rem">Compartilhar</b><p class="m">Toque em Abrir no WhatsApp ou copie o texto.</p><textarea id="bt" rows="6" readonly>'+esc(t)+'</textarea><a class="bp ac" href="'+esc(u)+'" target="_blank" rel="noopener" style="text-decoration:none">Abrir no WhatsApp</a>'+(navigator.share?'<button class="bp ol" data-a="sn">Compartilhar…</button>':'')+'<button class="bp ol" data-a="cp">Copiar texto</button><button class="bp ol" data-a="x2">Fechar</button></div>';$("sh").hidden=false}
 function cl(s){return String(s).replace(/\u00a0/g," ").replace(/[\u2013\u2014\u2212]/g,"-").replace(/[^\x20-\x7e\xa1-\xff]/g,"?")}
 function pR(s,n){s=cl(s).slice(0,n);return s+" ".repeat(n-s.length)}
