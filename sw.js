@@ -1,5 +1,5 @@
 /* Service worker do app: guarda uma cópia para funcionar sem internet e só troca de versão quando o usuário aceita. */
-const BUILD="4002",CACHE="anele-app-"+BUILD,CDN="anele-cdn";
+const BUILD="4003",CACHE="anele-app-"+BUILD,CDN="anele-cdn";
 const FILES=["./", "index.html", "app.js", "firebase-config.js", "cap.js", "manifest.webmanifest", "logo.png", "icon-192.png", "icon-512.png"];
 self.addEventListener("install",e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES.map(f=>new Request(f,{cache:"reload"})))))});
 self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith("anele-app-")&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
