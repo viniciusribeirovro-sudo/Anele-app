@@ -583,7 +583,7 @@ var k=0;(function nx(){if(k>=ops.length){SYN=0;if(manual)toast("Catálogo public
 function autoSync(){if(!G()||RU||SYN||!LJ.pub||Date.now()-LASTSYN<30000)return;clearTimeout(STM);STM=setTimeout(function(){syncCat(false)},2500)}
 
 /* ===== v4.1: atualização do aplicativo pela internet (sem baixar APK) ===== */
-var APPV=4003,APPN="4.3",UP={latest:null,min:+(function(){try{return localStorage.getItem("anele_minb")}catch(e){return 0}})()||0,waiting:false,dismissed:false,busy:false,go:false};
+var APPV=4004,APPN="4.4",UP={latest:null,min:+(function(){try{return localStorage.getItem("anele_minb")}catch(e){return 0}})()||0,waiting:false,dismissed:false,busy:false,go:false};
 function updMin(){return Math.max(UP.min||0,(UP.latest&&UP.latest.min)||0)}
 function updAvail(){return!!(UP.latest&&UP.latest.build>APPV)||UP.waiting}
 function updUi(){var e=$("upd");if(!e)return;var mand=APPV<updMin();
