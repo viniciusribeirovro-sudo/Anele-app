@@ -620,7 +620,7 @@ AU.onAuthStateChanged(auth,function(u){if(BUSY)return;if(!u){unsub();me=null;PF=
 /* ===== Suporte e cobrança (licença) =====
    O vencimento de cada cliente fica no arquivo licencas.json, que só você controla (LIC_URL).
    O cliente é identificado pelo projectId do Firebase dele. */
-var LIC_URL="https://viniciusribeirovro-sudo.github.io/Anele-app/licencas.json",SUP0="",
+var LIC_URL="https://viniciusribeirovro-sudo.github.io/Anele-app/licencas.json",SUP0="5516981203204",
 LIC={est:"livre",d:null,tol:5,nome:"",sup:"",pix:"",val:null,msg:"",ate:"",busy:0};
 function lcLS(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
 function brDate(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||"");return m?m[3]+"/"+m[2]+"/"+m[1]:String(s||"")}
