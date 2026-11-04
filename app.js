@@ -7,7 +7,7 @@ import {Filesystem,Directory} from "@capacitor/filesystem";
 import {Browser} from "@capacitor/browser";
 import {App} from "@capacitor/app";
 import {firebaseConfig} from "./firebase-config.js";
-var K="adminloja-v1",DB,me=null,tab="home",flt="todos",Q="",tmp=[],tt,V={},L={},A={},ST=["pendente","pago","entregue","cancelado"],
+var K="adminloja-v1",DB,me=null,tab="home",flt="todos",cf="todos",Q="",tmp=[],tt,V={},L={},A={},ST=["pendente","pago","entregue","cancelado"],
 T={home:"Início",ord:"Pedidos",prod:"Produtos",cust:"Clientes",cash:"Financeiro",users:"Usuários"},
 IC={home:'<path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/>',list:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M9 8h6M9 12h6M9 16h4"/>',box:'<path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M4 7.5L12 12l8-4.5M12 12v9"/>',users:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5c2 .7 3.5 2.6 3.5 5.5"/>',wallet:'<rect x="3" y="6" width="18" height="14" rx="3"/><path d="M3 10h18M16 15h2"/>',chat:'<path d="M12 3c5 0 9 3.4 9 7.7S17 18.4 12 18.4c-1 0-2-.1-2.9-.4L4 20l1.2-3.6C3.8 15.2 3 13.5 3 10.7 3 6.4 7 3 12 3z"/>',back:'<path d="M15 5l-7 7 7 7"/>',plus:'<path d="M12 5v14M5 12h14"/>',share:'<circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="M8.2 10.8l7.6-3.6M8.2 13.2l7.6 3.6"/>',pdf:'<path d="M6 3h8l5 5v13H6z"/><path d="M12 11v6M9 14l3 3 3-3"/>',search:'<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>'};
 function ic(n){return'<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+IC[n]+'</svg>'}
@@ -95,8 +95,16 @@ $("lb").onclick=doLogin;$("lp").onkeydown=function(e){if(e.key=="Enter")doLogin(
 FS.getDoc(dref("meta","setup")).then(function(s){var e=$("fs");if(e&&!s.exists()&&!me)e.innerHTML='<p class="m">Nenhum administrador criado ainda.</p><button class="bp ac" data-a="su">Criar administrador</button>'}).catch(function(){})}
 
 V.cust=function(){return sb("Buscar cliente")+'<div id="lst">'+L.cust()+'</div>'}
-V.cash=function(){var a=cs();return'<div class="gr3">'+[["Entradas",a[0]],["Saídas",a[1]],["Saldo",a[0]-a[1]]].map(function(x){return'<div class="c"><div class="m">'+x[0]+'</div><b class="big">'+brl(x[1])+'</b></div>'}).join("")+'</div>'+
-(DB.cash.length?DB.cash.slice().reverse().map(function(c){return'<div class="c r"><div><b>'+esc(c.d)+'</b><div class="m">'+c.dt+(c.cat?' · '+esc(c.cat):'')+'</div></div><div style="text-align:right"><b class="'+(c.tp=="entrada"?"gn":"")+'">'+(c.tp=="entrada"?"+":"−")+brl(c.v)+'</b><div><button class="chip" data-a="dl" data-i="'+c.id+'" style="margin-top:4px;padding:5px 12px">Excluir</button></div></div></div>'}).join(""):empty("Nenhum lançamento."))}
+V.cash=function(){var a=cs(),sal=a[0]-a[1],lbl={todos:"Todos os lançamentos",entrada:"Entradas",saida:"Saídas"},
+cards=[["entrada","Entradas",a[0],"gn"],["saida","Saídas",a[1],""],["todos","Saldo",sal,sal<0?"neg":""]],
+h='<div class="gr3">'+cards.map(function(x){var on=cf==x[0];return'<div class="c tap" role="button" tabindex="0" data-a="cf" data-i="'+x[0]+'" style="'+(on?'border:2px solid var(--ac);padding:11px':'')+'"><div class="m">'+x[1]+'</div><b class="big '+(x[3]=="neg"?"":x[3])+'"'+(x[3]=="neg"?' style="color:#d0665a"':'')+'>'+brl(x[2])+'</b></div>'}).join("")+'</div>',
+list=DB.cash.slice().reverse().filter(function(c){return cf=="todos"||c.tp==cf}),
+tot=list.reduce(function(t,c){return t+c.v},0);
+h+='<div class="r" style="margin:4px 2px 12px"><b>'+lbl[cf]+'</b><span class="m">'+list.length+(list.length==1?" lançamento":" lançamentos")+(cf!="todos"?" · "+brl(tot):"")+'</span></div>';
+if(cf=="saida"&&list.length){var cat={};list.forEach(function(c){var k=c.cat||"Sem categoria";cat[k]=(cat[k]||0)+c.v});
+h+='<div class="c"><div class="m" style="margin-bottom:8px">Saídas por categoria</div>'+Object.keys(cat).sort(function(x,y){return cat[y]-cat[x]}).map(function(k){return'<div class="r" style="padding:4px 0"><span>'+esc(k)+'</span><b>'+brl(cat[k])+'</b></div>'}).join("")+'</div>'}
+return h+(list.length?list.map(function(c){return'<div class="c r"><div><b>'+esc(c.d)+'</b><div class="m">'+c.dt+(c.cat?' · '+esc(c.cat):'')+'</div></div><div style="text-align:right"><b class="'+(c.tp=="entrada"?"gn":"")+'">'+(c.tp=="entrada"?"+":"−")+brl(c.v)+'</b><div><button class="chip" data-a="dl" data-i="'+c.id+'" style="margin-top:4px;padding:5px 12px">Excluir</button></div></div></div>'}).join(""):empty(cf=="entrada"?"Nenhuma entrada.":cf=="saida"?"Nenhuma saída.":"Nenhum lançamento."))};
+A.cf=function(i){cf=i;R()}
 
 
 A.tab=function(i){if(i=="aud"&&me.r!="admin"||i=="rel"&&!G()||i=="users"&&me.r!="admin"||i=="perm"&&me.r!="admin"||i=="cat"&&!G()||i=="site"&&!G()||i=="loja"&&!G())return toast("Sem permissão para esta área.");tab=i;Q="";R();scrollTo(0,0)};A.fl=function(i){flt=i;R()};A.x=X;A.x2=function(){$("sh").hidden=true;$("sh").innerHTML=""};A.out=function(){AU.signOut(auth)};
@@ -105,8 +113,8 @@ A.nc2=function(i){var c=i?g(DB.cust,i):{};F(i?"Editar cliente":"Novo cliente",[[
 var r={n:o.n,t:o.t,e:o.e,a:o.a,o:o.o};(i?FS.updateDoc(dref("cust",i),r):FS.setDoc(dref("cust",uid()),r)).catch(fail);X();R()},i?["dc",i]:0)};
 A.dc=function(i){if(i==GEN)return toast("O cliente genérico não pode ser excluído.");if(confirm("Excluir este cliente?")){FS.deleteDoc(dref("cust",i)).catch(fail);X();R()}};
 A.wc=function(i){wa("Olá!",g(DB.cust,i).t)};
-A.nl=function(){F("Novo lançamento",[["tp","Tipo","s",[["entrada","Entrada"],["saida","Saída"]]],["v","Valor (R$)","n"],["d","Descrição"],["cat","Categoria"]],{},function(o){if(!o.d||!o.v)return toast("Informe descrição e valor.");
-var id=uid();FS.setDoc(dref("cash",id),{ts:id,tp:o.tp,v:o.v,d:o.d,cat:o.cat,dt:hoje()}).catch(fail);X();R()})};
+A.nl=function(){F(cf=="saida"?"Nova saída":cf=="entrada"?"Nova entrada":"Novo lançamento",[["tp","Tipo","s",[["entrada","Entrada"],["saida","Saída"]]],["v","Valor (R$)","n"],["d","Descrição"],["cat","Categoria"]],{tp:cf=="saida"?"saida":"entrada"},function(o){if(!o.d||!o.v)return toast("Informe descrição e valor.");
+var id=uid();FS.setDoc(dref("cash",id),{ts:id,tp:o.tp,v:o.v,d:o.d,cat:o.cat,dt:hoje()}).catch(fail);if(cf!="todos")cf=o.tp;X();R()})};
 A.dl=function(i){if(confirm("Excluir este lançamento?")){FS.deleteDoc(dref("cash",i)).catch(fail);R()}};
 A.su=function(){F("Criar administrador",[["n","Seu nome"],["u","Usuário (login)"],["p","Senha (mínimo 6 caracteres)"]],{},function(o){var un=cleanU(o.u);if(!o.n||!un)return toast("Informe nome e usuário (letras, números, ponto, - ou _).");if(o.p.length<6)return toast("A senha precisa ter ao menos 6 caracteres.");
 BUSY=true;toast("Criando…");var em=mkEm();
@@ -583,7 +591,7 @@ var k=0;(function nx(){if(k>=ops.length){SYN=0;if(manual)toast("Catálogo public
 function autoSync(){if(!G()||RU||SYN||!LJ.pub||Date.now()-LASTSYN<30000)return;clearTimeout(STM);STM=setTimeout(function(){syncCat(false)},2500)}
 
 /* ===== v4.1: atualização do aplicativo pela internet (sem baixar APK) ===== */
-var APPV=4004,APPN="4.4",UP={latest:null,min:+(function(){try{return localStorage.getItem("anele_minb")}catch(e){return 0}})()||0,waiting:false,dismissed:false,busy:false,go:false};
+var APPV=4005,APPN="4.5",UP={latest:null,min:+(function(){try{return localStorage.getItem("anele_minb")}catch(e){return 0}})()||0,waiting:false,dismissed:false,busy:false,go:false};
 function updMin(){return Math.max(UP.min||0,(UP.latest&&UP.latest.min)||0)}
 function updAvail(){return!!(UP.latest&&UP.latest.build>APPV)||UP.waiting}
 function updUi(){var e=$("upd");if(!e)return;var mand=APPV<updMin();
