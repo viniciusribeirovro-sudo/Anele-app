@@ -1,6 +1,7 @@
 {
   "padrao": {
     "suporte": "5516981203204",
+    "email": "",
     "pix": "16981203204",
     "tolerancia": 5,
     "aviso": 5
@@ -10,7 +11,9 @@
       "nome": "Horta",
       "ate": "2026-12-02",
       "bloqueado": false,
-      "msg": ""
+      "msg": "",
+      "cliente_email": "",
+      "cliente_tel": ""
     }
   }
 }

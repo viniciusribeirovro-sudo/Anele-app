@@ -15,7 +15,7 @@ function $(i){return document.getElementById(i)}
 var app=initializeApp(firebaseConfig),auth=AU.getAuth(app),fdb=FS.initializeFirestore(app,{localCache:FS.persistentLocalCache({})}),EM="@adminloja.app",unsubs=[],loaded={},need=[],BUSY=false,sec=null,
 SRT={prods:nm,cust:nm,users:nm,ord:function(a,b){return a.id-b.id},cash:function(a,b){return(a.ts||0)-(b.ts||0)}};
 function nm(a,b){return String(a.n||"").localeCompare(String(b.n||""))}
-function load(){DB={users:[],prods:[],cust:[],ord:[],cash:[],sep:[],audit:[],mov:[],cats:[],custos:[],pedidosweb:[],catalogo:[]}}
+function load(){DB={users:[],prods:[],cust:[],ord:[],cash:[],sep:[],audit:[],mov:[],cats:[],custos:[],pedidosweb:[],catalogo:[],tk:[],tkAll:[]}}
 function dref(n,i){return FS.doc(fdb,n,String(i))}
 function cashId(i){return"o"+i}
 function cashOf(i,o){return{ts:uid(),tp:"entrada",v:tot(o),d:"Pedido #"+String(i).slice(-4),cat:"Vendas",dt:hoje(),oid:String(i)}}
@@ -28,7 +28,7 @@ function refresh(){if(!me||!ready())return;ensureGen();autoSync();updBadge();var
 function unsub(){unsubs.forEach(function(f){f()});unsubs=[];loaded={};need=[];RU=0;SC=null;PWSEEN=null;load()}
 function sub(n){var soft=n=="sep"||n=="audit"||n=="mov"||n=="cats"||n=="custos"||n=="pedidosweb"||n=="catalogo",ref=FS.collection(fdb,n);if(n=="audit"||n=="mov"||n=="pedidosweb")ref=FS.query(ref,FS.orderBy("ts","desc"),FS.limit(500));
 unsubs.push(FS.onSnapshot(ref,function(s){DB[n]=s.docs.map(function(d){var o=d.data();o.id=d.id;return o}).sort(SRT[n]);loaded[n]=1;SC=null;if(n=="pedidosweb")webNotify();refresh()},function(e){if(soft){loaded[n]=1;DB[n]=[];RU=1;refresh();return}if(e&&e.code=="permission-denied")kick("Sem permissão de acesso.");else console.error(e)}))}
-function subscribe(){unsub();need=["prods","cust","ord","sep","cats"];if(G())need.push("cash","mov","custos","pedidosweb","catalogo");if(me.r=="admin")need.push("users","audit");need.forEach(sub);subPrefs();subLoja();need.forEach(sub);
+function subscribe(){unsub();need=["prods","cust","ord","sep","cats"];if(G())need.push("cash","mov","custos","pedidosweb","catalogo");if(me.r=="admin")need.push("users","audit");need.forEach(sub);subPrefs();subLoja();subLic();subTk();need.forEach(sub);
 unsubs.push(FS.onSnapshot(dref("users",me.id),function(s){if(!s.exists()){kick("Seu acesso foi removido.");return}var o=s.data();me.n=o.n;me.com=o.com;if(o.r!=me.r){me.r=o.r;if(tab=="cash"&&!G()||tab=="users"&&me.r!="admin")tab="home";subscribe();R()}},function(){}))}
 async function enter(u){try{var s=await FS.getDoc(dref("users",u.uid));if(!s.exists()){await AU.signOut(auth);toast("Esse usuário não tem acesso ao app.");return}
 me=s.data();me.id=u.uid;tab="home";loadPF();subscribe();R();var b0=FS.writeBatch(fdb);aud(b0,"login","sistema","Login no aplicativo");b0.commit().catch(function(){})}catch(e){console.error(e);toast("Não foi possível entrar. Verifique a conexão.");AU.signOut(auth)}}
@@ -87,7 +87,7 @@ return'<label>'+f[1]+i+'</label>'}).join("")+(del?'<button class="bp ol dg" data
 phv();$("ok").onclick=function(){if(PB)return toast("Aguarde a foto terminar de carregar.");var o={};fs.forEach(function(f){var e=$("f_"+f[0]);o[f[0]]=f[2]=="n"?parseFloat(e.value)||0:f[2]=="m"||f[2]=="r"?pf(e.value):f[2]=="f"?PH:f[2]=="h"?"":e.value.trim()});cb(o)}}
 
 function R(){if(!me){login();return}if(!ready()){$("app").innerHTML='<header><h1>Admin Loja</h1></header><main><p class="m" style="text-align:center;padding:40px 0">Carregando dados…</p></main>';return}
-var t=[["home","Início","home"],["ord","Pedidos","list"],["sep","Separar","check"],["prod","Produtos","box"],["cust","Clientes","users"]];if(G()){t.splice(2,0,["site","Site","globe"]);t.push(["cash","Financeiro","wallet"])}
+if(FTAB[tab]&&!feat(tab))tab="home";if(tab=="cria"&&!crOk())tab="cfg";var t=[["home","Início","home"],["ord","Pedidos","list"],["sep","Separar","check"],["prod","Produtos","box"],["cust","Clientes","users"]];if(G()){t.splice(2,0,["site","Site","globe"]);t.push(["cash","Financeiro","wallet"])}t=t.filter(function(x){return feat(x[0])});
 var fb={ord:"no",prod:"np",cust:"nc2",cash:"nl",users:"nu"}[tab];if(tab!="ord"&&!G())fb=0;
 $("app").innerHTML='<header><h1>'+T[tab]+(navigator.onLine?'':' <span class="m" style="font-size:.9rem">· offline</span>')+'</h1>'+(tab=="home"?'<button class="ib" data-a="tab" data-i="cfg" aria-label="Configurações">'+ic("gear")+'</button>':'')+'</header><main>'+(RU?BAN:"")+V[tab]()+'</main>'+(fb?'<button class="fab" data-a="'+fb+'" aria-label="Novo">'+ic("plus")+'</button>':'')+'<nav>'+t.map(function(x){return'<button class="'+(tab==x[0]?"on":"")+'" data-a="tab" data-i="'+x[0]+'">'+ic(x[2])+'<span>'+x[1]+'</span>'+(x[0]=="site"&&webNovos()?'<i class="bdg">'+webNovos()+'</i>':'')+'</button>'}).join("")+'</nav>'}
 function login(){$("app").innerHTML='<div class="lg"><h1>Admin Loja</h1><p class="m" style="margin-bottom:24px">Entre para continuar.</p><label>Usuário<input id="lu" autocapitalize="none" autocomplete="username"></label><label>Senha<input id="lp" type="password" autocomplete="current-password"></label><button class="bp" id="lb">Entrar</button><div id="fs"></div><button class="bp ol" data-a="sup">Falar com o suporte</button><p class="m" style="text-align:center;margin-top:24px">Versão '+APPN+'</p></div>';
@@ -107,7 +107,7 @@ return h+(list.length?list.map(function(c){return'<div class="c r"><div><b>'+esc
 A.cf=function(i){cf=i;R()}
 
 
-A.tab=function(i){if(i=="aud"&&me.r!="admin"||i=="rel"&&!G()||i=="users"&&me.r!="admin"||i=="perm"&&me.r!="admin"||i=="cat"&&!G()||i=="site"&&!G()||i=="loja"&&!G())return toast("Sem permissão para esta área.");tab=i;Q="";R();scrollTo(0,0)};A.fl=function(i){flt=i;R()};A.x=X;A.x2=function(){$("sh").hidden=true;$("sh").innerHTML=""};A.out=function(){AU.signOut(auth)};
+A.tab=function(i){if(i=="aud"&&me.r!="admin"||i=="rel"&&!G()||i=="users"&&me.r!="admin"||i=="perm"&&me.r!="admin"||i=="cat"&&!G()||i=="site"&&!G()||i=="loja"&&!G())return toast("Sem permissão para esta área.");if(i=="cria"&&!crOk())return toast("Sem permissão para esta área.");if(FTAB[i]&&!feat(i))return toast("Recurso não liberado para esta loja.");if(i=="ord")ODF="";if(i=="prod")PLOW=0;tab=i;Q="";R();scrollTo(0,0)};A.fl=function(i){flt=i;R()};A.x=X;A.x2=function(){$("sh").hidden=true;$("sh").innerHTML=""};A.out=function(){AU.signOut(auth)};
 A.phx=function(){PH="";phv()};
 A.nc2=function(i){var c=i?g(DB.cust,i):{};F(i?"Editar cliente":"Novo cliente",[["n","Nome"],["t","Telefone (com DDD)"],["e","E-mail"],["a","Endereço"],["o","Observações","t"]],c,function(o){if(!o.n)return toast("Informe o nome.");
 var r={n:o.n,t:o.t,e:o.e,a:o.a,o:o.o};(i?FS.updateDoc(dref("cust",i),r):FS.setDoc(dref("cust",uid()),r)).catch(fail);X();R()},i?["dc",i]:0)};
@@ -203,12 +203,12 @@ var ks=Object.keys(m),mq=0,mf=0;ks.forEach(function(k){mq=Math.max(mq,m[k].q);mf
 return{m:m,top:ks.filter(function(k){var p=g(DB.prods,k);return p&&act(p)}).sort(function(a,b){return m[b].s-m[a].s}).slice(0,15)}}
 
 /* ----- produtos ----- */
-L.prod=function(){var q=nrm(Q),l=DB.prods.filter(function(p){return!q||nrm(pn(p)+" "+catName(p)+" "+(p.sku||"")).indexOf(q)>=0}),last,h="";
+L.prod=function(){var q=nrm(Q),l=DB.prods.filter(function(p){return(!PLOW||p.st<=3)&&(!q||nrm(pn(p)+" "+catName(p)+" "+(p.sku||"")).indexOf(q)>=0)}),last,h="";
 l=l.slice().sort(function(a,b){return String(catName(a)).localeCompare(String(catName(b)))||nm(a,b)});
 l.forEach(function(p){var rs=resv(p.id),cn=catName(p);if(cn!==last){last=cn;h+='<div class="m" style="margin:14px 2px 8px"><b>'+esc(last||"Sem categoria")+'</b></div>'}
 h+='<div class="c r'+(G()?' tap':'')+'"'+(G()?' data-a="np" data-i="'+p.id+'"':'')+(act(p)?'':' style="opacity:.55"')+'><div class="it">'+thumb(p.img)+'<div><b>'+esc(pn(p))+'</b><div class="m">'+brl(p.pr)+' · estoque '+qf(p.st)+(rs?' · reservado '+qf(rs):'')+(p.sku?' · '+esc(p.sku):'')+(act(p)?'':' · inativo')+'</div>'+''+'</div></div><div style="display:flex">'+(G()?'<button class="cb" data-a="mv" data-i="'+p.id+'" aria-label="Movimentações">'+ic("list")+'</button>':'')+'<button class="cb" data-a="wp" data-i="'+p.id+'" aria-label="WhatsApp">'+ic("chat")+'</button></div></div>'});
 return h||empty("Nenhum produto. Toque em + para cadastrar"+".")};
-V.prod=function(){return sb("Buscar produto")+''+'<div id="lst">'+L.prod()+'</div>'};
+V.prod=function(){return sb("Buscar produto")+(PLOW?'<div class="tb"><button class="chip on" data-a="plx">Estoque baixo ✕</button></div>':'')+'<div id="lst">'+L.prod()+'</div>'};
 A.np=function(i){var p=i?g(DB.prods,i):{},c0=i?cost(i):null;PH=p.img||"";PB=0;KNEW=null;
 var v=Object.assign({},p,{at:p.at===false?"0":"1",site:p.site===false?"0":"1",st:p.st==null?0:p.st,catId:p.catId||"",cu:c0?fm(c0.cu):"",pr:p.pr!=null?fm(p.pr):"",mg:"",mk:"",lc:""});
 F(i?"Editar produto":"Novo produto",[["n","Nome"],["catId","Categoria","k"],["ap","Unidade de venda (maço, unidade, pacote, bandeja, kg…)"],["sku","Peso / Quantidade / Embalagem (ex.: 200 g, 1 kg, pacote de 10 un.)"],["cu","Preço de custo (R$) — uso interno","m"],["pr","Preço de venda (R$)","m"],["mg","Margem de lucro (%)","m"],["mk","Markup (%)","m"],["lc","Lucro por unidade (R$)","r"],["cm","","h"],["st","Estoque","n"],["at","Status","s",[["1","Ativo"],["0","Inativo"]]],["site","Mostrar no site","s",[["1","Sim"],["0","Não"]]],["d","Descrição","t"],["img","Foto","f"]],v,function(o){
@@ -268,12 +268,12 @@ function ordSep(o){if(!o.de||o.s=="cancelado")return"";var d=sdAll()[o.de];if(!d
 function late(o){return!!o.de&&o.de<todayI()&&o.s!="entregue"&&o.s!="cancelado"}
 /* ----- lista de pedidos ----- */
 function oc(o){var sp=ordSep(o);return'<div class="c tap" data-a="od" data-i="'+o.id+'"><div class="r"><div class="it"><div><b>'+esc(o.cn)+'</b><div class="m">'+o.dt+' · '+o.items.length+' item(ns)'+(o.un?' · '+esc(o.un):'')+(o.src=="site"?' · site':'')+'</div><div class="m">Entrega: '+(o.de?fd(o.de):"a definir")+(late(o)?' · <b style="color:#d0665a">atrasado</b>':'')+(sp?' · '+sp:'')+'</div></div></div><div style="text-align:right"><b class="gn">'+brl(tot(o))+'</b><div style="margin-top:4px"><span class="pill st-'+o.s+'">'+o.s+'</span></div></div></div></div>'}
-L.ord=function(){var q=Q.toLowerCase(),l=DB.ord.filter(function(o){return(flt=="todos"||o.s==flt)&&(!q||o.cn.toLowerCase().indexOf(q)>=0||num(o.id).indexOf(q)>=0||(o.un||"").toLowerCase().indexOf(q)>=0)});
+L.ord=function(){var q=Q.toLowerCase(),l=DB.ord.filter(function(o){return(flt=="todos"||o.s==flt)&&odf(o)&&(!q||o.cn.toLowerCase().indexOf(q)>=0||num(o.id).indexOf(q)>=0||(o.un||"").toLowerCase().indexOf(q)>=0)});
 if(!l.length)return empty("Nenhum pedido aqui.");
 if(ogrp!="ent")return l.slice().reverse().map(oc).join("");
 l=l.slice().sort(function(a,b){return(a.de||"9999").localeCompare(b.de||"9999")||a.id-b.id});var last,h="";
 l.forEach(function(o){if(o.de!==last){last=o.de;h+='<div class="m" style="margin:14px 2px 8px"><b>'+(o.de?fdw(o.de)+(o.de==todayI()?" · hoje":o.de<todayI()?" · anterior":""):"Entrega a definir")+'</b></div>'}h+=oc(o)});return h};
-V.ord=function(){return sb("Buscar pedido")+'<div class="tb">'+["todos"].concat(ST).map(function(s){return'<button class="chip'+(flt==s?" on":"")+'" data-a="fl" data-i="'+s+'">'+s+'</button>'}).join("")+'</div><div class="tb">'+[["cri","Por criação"],["ent","Por entrega"]].map(function(x){return'<button class="chip'+(ogrp==x[0]?" on":"")+'" data-a="og" data-i="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div><div id="lst">'+L.ord()+'</div>'};
+V.ord=function(){return sb("Buscar pedido")+(ODF?'<div class="tb"><button class="chip on" data-a="odx">'+odl()+' ✕</button></div>':'')+'<div class="tb">'+["todos"].concat(ST).map(function(s){return'<button class="chip'+(flt==s?" on":"")+'" data-a="fl" data-i="'+s+'">'+s+'</button>'}).join("")+'</div><div class="tb">'+[["cri","Por criação"],["ent","Por entrega"]].map(function(x){return'<button class="chip'+(ogrp==x[0]?" on":"")+'" data-a="og" data-i="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div><div id="lst">'+L.ord()+'</div>'};
 A.og=function(k){ogrp=k;R()};
 /* ----- novo pedido / editar pedido ----- */
 A.no=function(){if(!DB.prods.some(act))return toast("Cadastre produtos antes de criar um pedido.");OE=null;WEBID=null;tmp=[];ofm()};
@@ -446,13 +446,13 @@ if(!l.length)return empty("Nenhum registro com esses filtros.");
 return'<p class="m">'+l.length+' registro(s)'+(DB.audit.length>=500?' (mostrando os 500 mais recentes)':'')+'</p>'+l.slice(0,200).map(function(e){return'<div class="c"><b>'+esc(e.d)+'</b><div class="m" style="margin-top:4px">'+fdt(e.ts)+' · '+esc(e.un||"?")+' · '+(ALB[e.a]||esc(e.a))+'</div>'+(e.ch||[]).map(function(c){return'<div class="m" style="margin-top:4px">'+esc(c.f)+': <s>'+esc(c.o||"—")+'</s> → <b>'+esc(c.n||"—")+'</b></div>'}).join("")+'</div>'}).join("")};
 
 /* ----- usuários: comissão futura + auditoria (sem senhas) ----- */
-V.users=function(){return'<div id="lst">'+DB.users.map(function(u){return'<div class="c r tap" data-a="nu" data-i="'+u.id+'"><div class="it"><div class="av">'+esc((u.n||"?").charAt(0).toUpperCase())+'</div><div><b>'+esc(u.n)+'</b><div class="m">@'+esc(u.u)+' · '+u.r+(u.com?' · comissão '+u.com+'%':'')+'</div></div></div></div>'}).join("")+'</div>'};
+V.users=function(){return'<div id="lst">'+DB.users.filter(visU).map(function(u){return'<div class="c r tap" data-a="nu" data-i="'+u.id+'"><div class="it"><div class="av">'+esc((u.n||"?").charAt(0).toUpperCase())+'</div><div><b>'+esc(u.n)+'</b><div class="m">@'+esc(u.u)+' · '+u.r+(u.com?' · comissão '+u.com+'%':'')+'</div></div></div></div>'}).join("")+'</div>'};
 A.nu=function(i){var u=i?g(DB.users,i):{};F(i?"Editar usuário":"Novo usuário",[["n","Nome"],["u","Usuário (login)"],["p","Senha"+(i?" (vazio mantém a atual)":"")],["r","Perfil","s",[["admin","Administrador"],["gerente","Gerente"],["vendedor","Vendedor"]]],["com","Comissão (%) — para uso futuro","n"]],{n:u.n,u:u.u,r:u.r||"vendedor",com:u.com||0},function(o){
 var un=cleanU(o.u);if(!o.n||!un)return toast("Informe nome e usuário (letras, números, ponto, - ou _).");
 if(!i&&!o.p)return toast("Informe a senha.");if(o.p&&o.p.length<6)return toast("A senha precisa ter ao menos 6 caracteres.");
 if(o.com<0||o.com>100)return toast("Comissão deve estar entre 0 e 100.");
 if(DB.users.some(function(x){return x.u==un&&x.id!=i}))return toast("Esse usuário já existe.");
-if(o.r!="admin"&&!DB.users.some(function(x){return x.id!=i&&x.r=="admin"}))return toast("Precisa existir ao menos um administrador.");
+if(o.r!="admin"&&!DB.users.some(function(x){return x.id!=i&&x.r=="admin"&&visU(x)}))return toast("Precisa existir ao menos um administrador.");
 var b=FS.writeBatch(fdb),p=null,done=function(){X();R()},ch=[],df=function(f,x,y){if(String(x==null?"":x)!=String(y==null?"":y))ch.push(chg(f,x,y))};
 if(i){df("nome",u.n,o.n);df("usuário",u.u,un);df("perfil",u.r,o.r);df("comissão %",u.com||0,o.com);if(o.p)ch.push(chg("senha","","redefinida"))}
 if(!i||o.p&&i!=me.id){var em=mkEm();p=mkAuth(em,o.p).then(function(id){b.set(dref("users",id),{n:o.n,u:un,r:o.r,em:em,com:o.com});b.set(dref("logins",un),{em:em});if(i){b.delete(dref("users",i));if(un!=u.u)b.delete(dref("logins",u.u))}
@@ -473,14 +473,22 @@ ops.push(function(b){aud(b,"restauracao","sistema","Backup restaurado ("+(d.prod
 
 /* ===== v3: tela inicial, configurações, permissões, categorias, cliente genérico ===== */
 function chart7(){var d=[],t=todayI(),i,mx=0,sm=0,k,v;for(i=6;i>=0;i--){k=addD(t,-i);v=0;DB.ord.forEach(function(o){if(o.s!="cancelado"&&cday(o)==k)v+=tot(o)});d.push([k,v]);mx=Math.max(mx,v);sm+=v}
-return'<div class="c" style="margin-top:12px"><div class="m">Vendas dos últimos 7 dias (por dia do mês)</div><div style="display:flex;align-items:flex-end;gap:8px;height:110px;margin-top:12px">'+d.map(function(x){return'<div style="flex:1;text-align:center;min-width:0"><div style="height:'+(mx?Math.max(3,Math.round(x[1]/mx*80)):3)+'px;background:var(--gn);border-radius:6px 6px 0 0" title="'+brl(x[1])+'"></div><div class="m" style="font-size:.7rem;margin-top:4px">'+x[0].slice(8)+'</div></div>'}).join("")+'</div><div class="m" style="margin-top:8px">Total: <b>'+brl(sm)+'</b></div></div>'}
-V.home=function(){var n=function(s){return DB.ord.filter(function(x){return x.s==s}).length},low=DB.prods.filter(function(p){return p.st<=3}).length,tdy=todayI(),ent=DB.ord.filter(function(o){return o.de==tdy&&o.s!="cancelado"&&o.s!="entregue"}).length,atr=DB.ord.filter(late).length;
-return'<p class="m" style="margin:0 0 14px">Olá, '+esc(me.n)+' · '+me.r+'</p><div class="gr">'+[["Pendentes",n("pendente")],["Pagos",n("pago")],["Entregues",n("entregue")],["Estoque baixo",low]].map(function(x){return'<div class="c"><div class="m">'+x[0]+'</div><b class="big">'+x[1]+'</b></div>'}).join("")+'</div><div class="c r"><div><div class="m">Entregas de hoje</div><b class="big">'+ent+'</b></div><div style="text-align:right"><div class="m">Atrasadas</div><b class="big"'+(atr?' style="color:#d0665a"':'')+'>'+atr+'</b></div></div>'+(G()?'<div class="c r tap" data-a="tab" data-i="site"><div><div class="m">Pedidos do site</div><b class="big">'+webNovos()+'</b></div><div class="m">novos · toque para ver</div></div><div class="c"><div class="m">Saldo do caixa</div><b class="big gn">'+brl(cs()[0]-cs()[1])+'</b></div>'+chart7():'')};
+return'<div class="c" style="margin-top:12px"><div class="m">Vendas dos últimos 7 dias (por dia do mês) · toque numa barra para ver os pedidos</div><div style="display:flex;align-items:flex-end;gap:8px;height:110px;margin-top:12px">'+d.map(function(x){return'<div class="tap" role="button" data-a="god" data-i="'+x[0]+'" style="flex:1;text-align:center;min-width:0"><div style="height:'+(mx?Math.max(3,Math.round(x[1]/mx*80)):3)+'px;background:var(--gn);border-radius:6px 6px 0 0" title="'+brl(x[1])+'"></div><div class="m" style="font-size:.7rem;margin-top:4px">'+x[0].slice(8)+'</div></div>'}).join("")+'</div><div class="m" style="margin-top:8px">Total: <b>'+brl(sm)+'</b></div></div>'}
+function tc(l,v,a,i,x){return'<div class="c tap" role="button" tabindex="0" data-a="'+a+'" data-i="'+i+'"><div class="r"><span class="m">'+l+'</span><span class="m">›</span></div><b class="big"'+(x||"")+'>'+v+'</b></div>'}
+V.home=function(){var n=function(s){return DB.ord.filter(function(x){return x.s==s}).length},low=lowP().length,tdy=todayI(),ent=DB.ord.filter(function(o){return o.de==tdy&&o.s!="cancelado"&&o.s!="entregue"}).length,atr=DB.ord.filter(late).length;
+return'<p class="m" style="margin:0 0 14px">Olá, '+esc(me.n)+' · '+me.r+'</p><div class="gr">'+tc("Pendentes",n("pendente"),"goo","pendente")+tc("Pagos",n("pago"),"goo","pago")+tc("Entregues",n("entregue"),"goo","entregue")+tc("Estoque baixo",low,"gop","")+'</div><div class="gr" style="margin-top:12px">'+tc("Entregas de hoje",ent,"goo","hoje")+tc("Atrasadas",atr,"goo","atr",atr?' style="color:#d0665a"':'')+'</div>'+(G()?'<div style="height:12px"></div>'+(feat("site")?'<div class="c r tap" role="button" tabindex="0" data-a="tab" data-i="site"><div><div class="m">Pedidos do site</div><b class="big">'+webNovos()+'</b></div><div class="m">novos · toque para ver ›</div></div>':'')+(feat("cash")?'<div class="c tap" role="button" tabindex="0" data-a="tab" data-i="cash"><div class="r"><span class="m">Saldo do caixa</span><span class="m">›</span></div><b class="big gn">'+brl(cs()[0]-cs()[1])+'</b></div>':'')+chart7():'')};
+function lowP(){return DB.prods.filter(function(p){return p.st<=3})}
+function odf(o){if(!ODF)return true;if(ODF=="hoje")return o.de==todayI()&&o.s!="cancelado"&&o.s!="entregue";if(ODF=="atr")return late(o);return o.s!="cancelado"&&cday(o)==ODF.slice(2)}
+function odl(){return ODF=="hoje"?"Entregas de hoje":ODF=="atr"?"Atrasados":"Vendas de "+fd(ODF.slice(2))}
+A.goo=function(i){if(i=="hoje"||i=="atr"){flt="todos";ODF=i}else{flt=i;ODF=""}tab="ord";Q="";R();scrollTo(0,0)};
+A.god=function(i){flt="todos";ODF="d:"+i;tab="ord";Q="";R();scrollTo(0,0)};
+A.gop=function(){PLOW=1;tab="prod";Q="";R();scrollTo(0,0)};
+A.odx=function(){ODF="";R()};A.plx=function(){PLOW=0;R()};
 function crow(i0,t,sub,a,i){return'<button class="c r tap" data-a="'+a+'"'+(i?' data-i="'+i+'"':'')+' style="width:100%;text-align:left;font:inherit;color:inherit"><div class="it"><div class="av">'+ic(i0)+'</div><div><b>'+t+'</b>'+(sub?'<div class="m">'+sub+'</div>':'')+'</div></div></button>'}
 V.cfg=function(){var ad=me.r=="admin",h='<p class="m" style="margin:0 0 6px">'+esc(me.n)+' · '+me.r+'</p>'+sec_n("Aparência")+'<div class="c"><b>Tamanho do texto</b><div class="tb" style="margin:12px 0 8px;flex-wrap:wrap">'+[["p","Pequeno"],["n","Normal"],["g","Grande"],["x","Extra grande"]].map(function(x){return'<button class="chip'+(PF.fs==x[0]?" on":"")+'" data-a="fz" data-i="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div><div class="m">Vale só para o seu usuário e fica salvo.</div></div>';
-if(G())h+=sec_n("Gestão")+crow("list","Relatórios","Vendas e entregas por período","tab","rel")+crow("globe","Loja online","Site, entrega e catálogo","tab","loja")+crow("cat","Categorias de produtos","Criar, renomear, unificar e excluir","tab","cat")+crow("pdf","Catálogo em PDF","","pc")+crow("chat","Catálogo no WhatsApp","","wk");
-if(ad)h+=sec_n("Administração")+crow("users","Usuários","Criar, editar e excluir","tab","users")+crow("shield","Permissões","Quem pode fazer o quê","tab","perm")+crow("check","Histórico de atividades","Auditoria","tab","aud")+crow("share","Backup","Copiar os dados","bk")+crow("box","Restaurar backup","","rs");
-return h+updSec()+licSec()+sec_n("Suporte")+crow("chat","Falar com o suporte","Dúvidas ou problemas, pelo WhatsApp","sup")+sec_n("Conta")+'<button class="bp ol dg" data-a="out">Sair</button>'};
+if(G())h+=sec_n("Gestão")+(feat("rel")?crow("list","Relatórios","Vendas e entregas por período","tab","rel"):"")+(feat("loja")?crow("globe","Loja online","Site, entrega e catálogo","tab","loja"):"")+(feat("cat")?crow("cat","Categorias de produtos","Criar, renomear, unificar e excluir","tab","cat"):"")+(feat("pc")?crow("pdf","Catálogo em PDF","","pc"):"")+(feat("wk")?crow("chat","Catálogo no WhatsApp","","wk"):"");
+if(ad)h+=sec_n("Administração")+crow("users","Usuários","Criar, editar e excluir","tab","users")+crow("shield","Permissões","Quem pode fazer o quê","tab","perm")+(feat("aud")?crow("check","Histórico de atividades","Auditoria","tab","aud"):"")+(feat("bk")?crow("share","Backup","Copiar os dados","bk")+crow("box","Restaurar backup","","rs"):"");
+return h+updSec()+licSec()+sec_n("Suporte")+crow("chat","Falar com o suporte","Abrir um chamado","sup")+crow("list","Meus chamados",tkSub(),"tab","tk")+(crOk()?sec_n("Criador")+crow("shield","Painel do criador","Licença, recursos e chamados","tab","cria"):"")+sec_n("Conta")+'<button class="bp ol dg" data-a="out">Sair</button>'};
 V.perm=function(){var Y="✔",N="—",rows=[["Criar pedidos e separar",Y,Y,Y],["Editar, cancelar e excluir pedidos",Y,Y,N],["Produtos, preços e estoque",Y,Y,"só baixa por venda"],["Custos, margens e markup",Y,Y,N],["Clientes e categorias",Y,Y,N],["Financeiro e relatórios",Y,Y,N],["Usuários e permissões",Y,N,N],["Histórico de atividades",Y,N,N],["Backup e restauração",Y,N,N]];
 return'<button class="chip on" data-a="tab" data-i="cfg">← Configurações</button><p class="m" style="margin-top:12px">Estas regras são aplicadas pelo servidor (Firebase), não só escondidas na tela. Para mudar o perfil de alguém, abra Usuários e toque no usuário.</p><div class="c" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><tr><th style="text-align:left;padding:6px 4px">Ação</th><th>Adm.</th><th>Ger.</th><th>Vend.</th></tr>'+rows.map(function(r){return'<tr>'+r.map(function(c,k){return'<td style="padding:8px 4px;border-top:1px solid var(--ln);'+(k?'text-align:center;':'')+'">'+c+'</td>'}).join("")+'</tr>'}).join("")+'</table></div><button class="bp" data-a="tab" data-i="users">Gerenciar usuários</button>'};
 /* ----- categorias (administração) ----- */
@@ -610,7 +618,7 @@ A.upg=function(){updApply()};
 A.upx=function(){UP.dismissed=true;updUi()};
 A.upc=function(){updCheck(true)};
 A.upm=function(v){if(me.r!="admin")return toast("Somente administrador.");var n=v=="1"?((UP.latest&&UP.latest.build)||APPV):0,b=FS.writeBatch(fdb);b.set(dref("loja","app"),{min:n,by:me.n,ts:Date.now()});aud(b,"app_obrigatoria","sistema",n?"Atualização obrigatória ligada (a partir da versão "+n+")":"Atualização voltou a ser opcional");b.commit().catch(fail);UP.min=n;try{localStorage.setItem("anele_minb",String(n))}catch(e){}updUi();R()};
-function updSec(){var ad=me.r=="admin",mand=UP.min>0;return sec_n("Aplicativo")+'<div class="c"><div class="r"><b>Versão instalada</b><span>'+esc(APPN)+' (build '+APPV+')</span></div><div class="r" style="margin-top:8px"><span class="m">Última disponível</span><span>'+(UP.latest?esc(UP.latest.name||UP.latest.build):"—")+'</span></div><p class="m">'+(updAvail()?"Há uma versão nova para instalar.":"Seu app está atualizado.")+'</p><button class="bp" data-a="upc">Verificar atualização</button>'+(updAvail()?'<button class="bp ac" data-a="upg">Atualizar agora</button>':'')+(ad?'<div class="m" style="margin-top:14px"><b>Atualização obrigatória:</b> '+(mand?"ligada":"desligada")+'. Quando ligada, ninguém usa o app sem instalar a versão mais nova.</div><button class="bp ol" data-a="upm" data-i="'+(mand?"0":"1")+'">'+(mand?"Voltar a ser opcional":"Tornar obrigatória")+'</button>':'')+'</div>'}
+function updSec(){var ad=me.r=="admin",mand=UP.min>0;return sec_n("Aplicativo")+'<div class="c"><div class="r" data-a="vt"><b>Versão instalada</b><span>'+esc(APPN)+' (build '+APPV+')</span></div><div class="r" style="margin-top:8px"><span class="m">Última disponível</span><span>'+(UP.latest?esc(UP.latest.name||UP.latest.build):"—")+'</span></div><p class="m">'+(updAvail()?"Há uma versão nova para instalar.":"Seu app está atualizado.")+'</p><button class="bp" data-a="upc">Verificar atualização</button>'+(updAvail()?'<button class="bp ac" data-a="upg">Atualizar agora</button>':'')+(ad?'<div class="m" style="margin-top:14px"><b>Atualização obrigatória:</b> '+(mand?"ligada":"desligada")+'. Quando ligada, ninguém usa o app sem instalar a versão mais nova.</div><button class="bp ol" data-a="upm" data-i="'+(mand?"0":"1")+'">'+(mand?"Voltar a ser opcional":"Tornar obrigatória")+'</button>':'')+'</div>'}
 if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(function(reg){reg.addEventListener("updatefound",function(){var w=reg.installing;if(w)w.addEventListener("statechange",function(){if(w.state=="installed"&&navigator.serviceWorker.controller){UP.waiting=true;updUi()}})});if(reg.waiting&&navigator.serviceWorker.controller){UP.waiting=true;updUi()}}).catch(function(){});navigator.serviceWorker.addEventListener("controllerchange",function(){if(UP.go)location.reload()})}
 setTimeout(function(){updCheck(false)},1200);setInterval(function(){updCheck(false)},600000);document.addEventListener("visibilitychange",function(){if(!document.hidden)updCheck(false)});
 
@@ -625,6 +633,76 @@ if(String(firebaseConfig.apiKey).indexOf("COLE")==0)$("app").innerHTML='<div cla
 else{$("app").innerHTML='<p class="m" style="text-align:center;padding-top:40vh">Carregando…</p>';
 AU.onAuthStateChanged(auth,function(u){if(BUSY)return;if(!u){unsub();me=null;PF={fs:"n",fav:[]};applyFs();GENDONE=0;R();return}enter(u)})}
 
+/* ===== v4: chamados de suporte, área do criador e recursos por cliente =====
+   Chamados ficam na coleção "tickets" do Firebase da loja. Licença e recursos liberados ficam no
+   documento loja/lic, que só o criador deve poder gravar (regras do Firebase). */
+var ODF="",PLOW=0,LGN=0,TKERR=false,TKS=null,TKALLU=0,VT=0,VTT=0,LICRAW=null,
+LOV=(function(){try{return JSON.parse(localStorage.getItem("anele_lov"))}catch(e){return null}})(),
+FTAB={rel:1,loja:1,site:1,cat:1,cash:1,sep:1,aud:1},
+FEATS=[["rel","Relatórios"],["loja","Loja online"],["site","Pedidos do site"],["cat","Categorias de produtos"],["cash","Financeiro"],["sep","Separação e produção"],["aud","Histórico de atividades"],["bk","Backup e restauração"],["pc","Catálogo em PDF"],["wk","Catálogo no WhatsApp"]],
+TKBAN='<div class="c" style="border-color:#d0665a"><b>Chamados indisponíveis</b><div class="m">As regras do Firebase ainda não liberam a coleção de chamados. O criador precisa publicá-las.</div></div>';
+T.tk="Meus chamados";T.cria="Painel do criador";
+(function(){var s=document.createElement("style");s.textContent="#sh{z-index:250}";document.head.appendChild(s)})();
+function feat(k){return!(LOV&&LOV.rec&&LOV.rec[k]===false)}
+function crOk(){var c=(LICRAW&&LICRAW.criador)||{},h=c.hash;return!!(h&&me&&me.r=="admin"&&String(c.usuario||"").toLowerCase()==String(me.u||"").toLowerCase()&&lcLS("anele_cr_"+me.id)===h)}
+function visU(u){var c=String((LICRAW&&LICRAW.criador&&LICRAW.criador.usuario)||"").toLowerCase();return!c||crOk()||String(u.u||"").toLowerCase()!==c}
+function licApply(){Object.assign(LIC,licCalc(LICRAW,String(firebaseConfig.projectId||""),Date.now()));licUi();if(me&&crOk())subTkAll()}
+function licTxt(){var E=LIC.est;return E=="livre"?"Sem plano cadastrado (uso liberado)":E=="bloq"?"Suspensa":E=="venc"?"Vencida há "+(-LIC.d)+" dia(s)":LIC.ate?"Ativa até "+brDate(LIC.ate)+(LIC.d>0?" ("+LIC.d+" dia(s))":LIC.d==0?" (vence hoje)":""):"Ativa"}
+function fmtTel(d){d=String(d||"").replace(/\D/g,"");var m=/^55(\d{2})(\d{4,5})(\d{4})$/.exec(d);return m?"+55 ("+m[1]+") "+m[2]+"-"+m[3]:d}
+function copyTxt(t,ok){var x=document.createElement("textarea"),done=false,bad=function(){toast("Não consegui copiar. Segure o texto para copiar.")};x.value=t;x.style.cssText="position:fixed;opacity:0";document.body.appendChild(x);x.select();try{done=document.execCommand("copy")}catch(e){}x.remove();if(done)return toast(ok||"Copiado.");try{navigator.clipboard.writeText(t).then(function(){toast(ok||"Copiado.")},bad)}catch(e){bad()}}
+A.cpv=function(v){copyTxt(v)};
+A.lgn=function(){LGN=1;licUi()};
+function supSheet(txt){var m=LIC.mail,p=LIC.sup,h='<div class="sc"><b class="h" style="font-size:1.2rem">Falar com o suporte</b><p class="m">'+txt+'</p>';
+if(m)h+='<div class="c r" style="margin-top:12px"><div><div class="m">E-mail</div><b style="word-break:break-all">'+esc(m)+'</b></div><button class="chip on" data-a="cpv" data-i="'+esc(m)+'">Copiar</button></div>';
+if(p)h+='<div class="c r"><div><div class="m">Telefone</div><b>'+esc(fmtTel(p))+'</b></div><button class="chip on" data-a="cpv" data-i="'+esc(p)+'">Copiar</button></div>';
+if(!m&&!p)h+='<p class="m">O contato do suporte ainda não foi configurado.</p>';
+$("sh").innerHTML=h+'<button class="bp ol" data-a="x2">Fechar</button></div>';$("sh").hidden=false}
+/* ----- recursos e licença gravados pelo criador (loja/lic) ----- */
+function subLic(){unsubs.push(FS.onSnapshot(dref("loja","lic"),function(s){LOV=s.exists()?s.data():null;try{if(LOV)localStorage.setItem("anele_lov",JSON.stringify(LOV));else localStorage.removeItem("anele_lov")}catch(e){}licApply();R()},function(){}))}
+function crFail(e){var c=e&&e.code||"";toast(c=="permission-denied"?"Sem permissão no servidor. Publique as regras do criador no Firebase.":"Não foi possível salvar.")}
+function licSave(o){return FS.setDoc(dref("loja","lic"),Object.assign({on:true,by:me.n,ts:Date.now()},o),{merge:true}).then(function(){toast("Licença atualizada.")}).catch(crFail)}
+/* ----- chamados ----- */
+function tkMap(s){return s.docs.map(function(d){var o=d.data();o.id=d.id;return o}).sort(function(a,b){return(b.ts||0)-(a.ts||0)})}
+function refreshTk(){if(me&&ready()&&(tab=="tk"||tab=="cria"||tab=="cfg"))R()}
+function tkNotify(){if(TKS)DB.tk.forEach(function(t){if(t.resp&&TKS[t.id]===0)toast("O suporte respondeu: "+t.as)});TKS={};DB.tk.forEach(function(t){TKS[t.id]=t.resp?1:0})}
+function subTk(){unsubs.push(FS.onSnapshot(FS.query(FS.collection(fdb,"tickets"),FS.where("uid","==",me.id)),function(s){TKERR=false;DB.tk=tkMap(s);tkNotify();refreshTk()},function(){TKERR=true;DB.tk=[];refreshTk()}));subTkAll()}
+function subTkAll(){if(TKALLU||!me||!crOk())return;var st=FS.onSnapshot(FS.collection(fdb,"tickets"),function(s){DB.tkAll=tkMap(s);refreshTk()},function(){});TKALLU=1;unsubs.push(function(){TKALLU=0;st()})}
+function tkSub(){var n=(DB.tk||[]).filter(function(t){return t.resp&&t.st=="respondido"}).length;return n?n+" com resposta":"Acompanhe suas solicitações"}
+function tkPill(s){return'<span class="pill '+(s=="respondido"?"st-pago":s=="fechado"?"st-entregue":"st-pendente")+'">'+esc(s)+'</span>'}
+function tkCard(t,adm){var m=String(t.ms||"");return'<div class="c tap" data-a="'+(adm?"tkv":"tkm")+'" data-i="'+t.id+'"><div class="r"><b>'+esc(t.as)+'</b>'+tkPill(t.st)+'</div><div class="m">'+esc(t.dt||"")+(adm?' · '+esc(t.lj||"")+' · '+esc(t.un||""):'')+'</div><div style="margin-top:8px;white-space:pre-wrap">'+esc(m.slice(0,140))+(m.length>140?"…":"")+'</div>'+(t.resp?'<div class="m" style="margin-top:8px"><b>Resposta:</b> '+esc(String(t.resp).slice(0,140))+'</div>':'')+'</div>'}
+V.tk=function(){var l=DB.tk||[];return'<button class="chip on" data-a="tab" data-i="cfg">← Configurações</button><div class="r" style="margin:14px 0 6px"><b class="h" style="font-size:1.2rem">'+l.length+' chamado(s)</b><button class="chip on" data-a="sup">+ Novo</button></div>'+(TKERR?TKBAN:"")+(l.length?l.map(function(t){return tkCard(t,0)}).join(""):empty("Nenhum chamado ainda. Toque em + Novo para falar com o suporte."))};
+A.tkm=function(i){var t=g(DB.tk,i);if(!t)return;P(esc(t.as),esc(t.dt||""),'<div class="c"><div class="m">Sua mensagem</div><div style="white-space:pre-wrap;margin-top:6px">'+esc(t.ms)+'</div></div>'+(t.resp?'<div class="c"><div class="m">Resposta do suporte'+(t.rdt?' · '+esc(t.rdt):'')+'</div><div style="white-space:pre-wrap;margin-top:6px">'+esc(t.resp)+'</div></div>':'<p class="m">Ainda sem resposta. Quando o suporte responder, você é avisado aqui.</p>')+'<p class="m">Situação: '+tkPill(t.st)+'</p>')};
+function tkContact(){var o=null;try{o=JSON.parse(localStorage.getItem("anele_ct_"+me.id))}catch(e){}return{em:(o&&o.em)||LIC.cm||"",tl:(o&&o.tl)||LIC.ct||""}}
+function tkFail(e){var c=e&&e.code||"";toast(c=="permission-denied"?"O servidor ainda não aceita chamados. Avise o criador do app.":"Não foi possível enviar o chamado. Tente de novo.")}
+function tkForm(){var c=tkContact();F("Falar com o suporte",[["as","Assunto"],["ms","Mensagem","t"],["em","Seu e-mail"],["tl","Seu telefone (com DDD)"]],{em:c.em,tl:c.tl},function(o){
+if(!o.as)return toast("Informe o assunto.");if(String(o.ms||"").length<5)return toast("Descreva o problema ou a dúvida.");
+if(!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(o.em))return toast("Informe um e-mail válido.");if(String(o.tl).replace(/\D/g,"").length<10)return toast("Informe o telefone com DDD.");
+try{localStorage.setItem("anele_ct_"+me.id,JSON.stringify({em:o.em,tl:o.tl}))}catch(e){}
+FS.setDoc(dref("tickets",uid()),{uid:me.id,un:me.n,lj:LIC.nome||firebaseConfig.projectId||"",em:o.em,tl:o.tl,as:o.as,ms:o.ms,st:"aberto",ts:Date.now(),dt:hoje(),ver:APPN}).then(function(){toast("Chamado enviado. Acompanhe em Meus chamados.")}).catch(tkFail);X();tab="tk";R()})}
+/* ----- acesso do criador: usuário próprio + chave secreta ----- */
+async function crHash(k){var e=new TextEncoder(),m=await crypto.subtle.importKey("raw",e.encode(k),"PBKDF2",false,["deriveBits"]),b=await crypto.subtle.deriveBits({name:"PBKDF2",hash:"SHA-256",salt:e.encode("anele-criador-v1"),iterations:200000},m,256);return Array.from(new Uint8Array(b)).map(function(x){return("0"+x.toString(16)).slice(-2)}).join("")}
+A.vt=function(){if(!me||me.r!="admin")return;VT++;clearTimeout(VTT);VTT=setTimeout(function(){VT=0},2500);if(VT>=7){VT=0;$("sh").innerHTML='<div class="sc"><b class="h" style="font-size:1.2rem">Acesso do criador</b><p class="m">Digite a sua chave secreta.</p><input id="ck" type="password" autocomplete="off"><button class="bp" data-a="cro">Entrar</button><button class="bp ol" data-a="x2">Fechar</button></div>';$("sh").hidden=false}};
+A.cro=async function(){var k=($("ck")||{}).value||"";if(k.length<8)return toast("A chave precisa ter ao menos 8 caracteres.");var h;try{h=await crHash(k)}catch(e){return toast("Este aparelho não consegue validar a chave.")}
+var c=(LICRAW&&LICRAW.criador)||{};
+if(!c.hash){var sn='"criador": {"usuario": "'+String(me.u||"")+'", "hash": "'+h+'"},';$("sh").innerHTML='<div class="sc"><b class="h" style="font-size:1.2rem">Cadastrar chave</b><p class="m">Ainda não há chave no licencas.json. Copie a linha abaixo e cole dentro do arquivo, logo depois da primeira chave {. Depois entre de novo com a mesma chave.</p><textarea rows="4" readonly>'+esc(sn)+'</textarea><button class="bp" data-a="cpv" data-i="'+esc(sn)+'">Copiar linha</button><button class="bp ol" data-a="x2">Fechar</button></div>';return}
+if(h!==c.hash||String(c.usuario||"").toLowerCase()!==String(me.u||"").toLowerCase())return toast("Chave ou usuário incorretos.");
+lcLS("anele_cr_"+me.id,h);A.x2();subTkAll();toast("Modo criador ativado.");tab="cria";R()};
+V.cria=function(){var on=!!(LOV&&LOV.on),bq=on&&!!LOV.bq,ab=(DB.tkAll||[]).filter(function(t){return t.st!="fechado"}).length;
+return'<button class="chip on" data-a="tab" data-i="cfg">← Configurações</button>'+sec_n("Seu código de criador")+'<div class="c"><div class="m">Use este código nas regras do Firebase, no lugar de SEU_UID_DE_CRIADOR.</div><div class="lpx" style="word-break:break-all;margin-top:8px">'+esc(me.id)+'</div><button class="bp ol" data-a="cpv" data-i="'+esc(me.id)+'">Copiar código</button></div>'
++sec_n("Licença deste cliente")+'<div class="c"><div class="r"><b>Situação</b><span style="text-align:right">'+licTxt()+'</span></div><div class="r" style="margin-top:8px"><span class="m">Controle</span><span>'+(on?"pelo painel":"pelo licencas.json")+'</span></div>'+(LIC.val!=null?'<div class="r" style="margin-top:8px"><span class="m">Valor</span><span>'+brl(LIC.val)+'</span></div>':'')+'<button class="bp" data-a="cl">Editar licença</button><button class="bp ol" data-a="cl30">+30 dias de prazo</button><button class="bp ol'+(bq?'':' dg')+'" data-a="clb">'+(bq?"Desbloquear acesso":"Bloquear acesso agora")+'</button>'+(on?'<button class="bp ol" data-a="clr">Voltar a usar o licencas.json</button>':'')+'</div>'
++sec_n("O que está liberado para o cliente")+'<div class="c">'+FEATS.map(function(f,k){var o=feat(f[0]);return'<div class="r tap" data-a="rec" data-i="'+f[0]+'" style="padding:10px 0'+(k?';border-top:1px solid var(--ln)':'')+'"><span>'+f[1]+'</span><span class="pill '+(o?"st-pago":"st-cancelado")+'">'+(o?"liberado":"bloqueado")+'</span></div>'}).join("")+'</div><p class="m">Toque numa linha para liberar ou bloquear. Vale para todos os usuários desta loja.</p>'
++sec_n("Chamados recebidos ("+ab+" aberto(s))")+(TKERR?TKBAN:"")+((DB.tkAll||[]).length?DB.tkAll.map(function(t){return tkCard(t,1)}).join(""):empty("Nenhum chamado recebido."))};
+A.cl=function(){F("Licença",[["ate","Vencimento (vazio = sem vencimento)","d"],["val","Valor mensal (R$)","m"],["msg","Mensagem na tela de bloqueio","t"],["bq","Acesso","s",[["0","Liberado"],["1","Bloqueado"]]]],{ate:LIC.ate||"",val:LIC.val!=null?fm(LIC.val):"",msg:LIC.msg||"",bq:LOV&&LOV.on&&LOV.bq?"1":"0"},function(o){licSave({ate:o.ate||"",val:isNaN(o.val)?null:r2(o.val),msg:o.msg||"",bq:o.bq=="1"});X();R()})};
+A.cl30=function(){var b=LIC.ate&&LIC.ate>todayI()?LIC.ate:todayI();licSave({ate:addD(b,30),bq:false,val:LIC.val==null?null:LIC.val,msg:LIC.msg||""})};
+A.clb=function(){var b=!(LOV&&LOV.on&&LOV.bq);if(b&&!confirm("Bloquear o acesso deste cliente agora?"))return;licSave({ate:LIC.ate||"",bq:b,val:LIC.val==null?null:LIC.val,msg:LIC.msg||""})};
+A.clr=function(){FS.setDoc(dref("loja","lic"),{on:false,by:me.n,ts:Date.now()},{merge:true}).then(function(){toast("Voltou a usar o licencas.json.")}).catch(crFail)};
+A.rec=function(k){var r={};r[k]=!feat(k);FS.setDoc(dref("loja","lic"),{rec:r,by:me.n,ts:Date.now()},{merge:true}).catch(crFail)};
+function tkUp(i,o){FS.updateDoc(dref("tickets",i),o).then(function(){toast("Chamado atualizado.")}).catch(crFail);X();R()}
+A.tkv=function(i){var t=g(DB.tkAll,i);if(!t)return;P(esc(t.as),esc(t.dt||"")+" · "+esc(t.lj||""),'<div class="c"><div class="m">Mensagem de '+esc(t.un||"—")+'</div><div style="white-space:pre-wrap;margin-top:6px">'+esc(t.ms)+'</div></div><div class="c r"><div><div class="m">E-mail</div><b style="word-break:break-all">'+esc(t.em)+'</b></div><button class="chip on" data-a="cpv" data-i="'+esc(t.em)+'">Copiar</button></div><div class="c r"><div><div class="m">Telefone</div><b>'+esc(t.tl)+'</b></div><button class="chip on" data-a="cpv" data-i="'+esc(t.tl)+'">Copiar</button></div><p class="m">Versão do app: '+esc(t.ver||"—")+' · '+tkPill(t.st)+'</p><label>Sua resposta (o cliente vê em Meus chamados)<textarea id="tr" rows="5">'+esc(t.resp||"")+'</textarea></label>','<button class="bp" data-a="tkr" data-i="'+t.id+'">Enviar resposta</button>'+(t.st=="fechado"?'<button class="bp ol" data-a="tko" data-i="'+t.id+'">Reabrir chamado</button>':'<button class="bp ol" data-a="tkc" data-i="'+t.id+'">Fechar chamado</button>'))};
+A.tkr=function(i){var v=String(($("tr")||{}).value||"").trim();if(!v)return toast("Escreva a resposta.");tkUp(i,{resp:v,st:"respondido",rdt:hoje(),rby:me.n})};
+A.tkc=function(i){tkUp(i,{st:"fechado"})};A.tko=function(i){var t=g(DB.tkAll,i);tkUp(i,{st:t&&t.resp?"respondido":"aberto"})};
+["bk","rs","pc","wk"].forEach(function(k){var f=A[k];if(f)A[k]=function(){if(!feat(k=="rs"?"bk":k))return toast("Recurso não liberado para esta loja.");return f.apply(this,arguments)}});
+
 /* ===== Suporte e cobrança (licença) =====
    O vencimento de cada cliente fica no arquivo licencas.json, que só você controla (LIC_URL).
    O cliente é identificado pelo projectId do Firebase dele. */
@@ -634,7 +712,9 @@ function lcLS(k,v){try{if(v===undefined)return localStorage.getItem(k);localStor
 function brDate(s){var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(s||"");return m?m[3]+"/"+m[2]+"/"+m[1]:String(s||"")}
 function licCalc(raw,pid,now){
 var pad=(raw&&raw.padrao)||{},ent=(raw&&raw.clientes&&raw.clientes[pid])||null,
-o={est:"livre",d:null,tol:5,nome:"",sup:"",pix:"",val:null,msg:"",ate:""};
+o={est:"livre",d:null,tol:5,nome:"",sup:"",pix:"",val:null,msg:"",ate:"",mail:"",cm:"",ct:""},ov=LOV&&LOV.on?LOV:null;
+if(ov)ent=Object.assign({},ent||{},{ate:ov.ate||"",bloqueado:!!ov.bq,valor:ov.val==null?null:ov.val,msg:ov.msg||""});
+o.mail=String((ent&&ent.email)||pad.email||"");o.cm=String((ent&&ent.cliente_email)||"");o.ct=String((ent&&ent.cliente_tel)||"");
 o.sup=String((ent&&ent.suporte)||pad.suporte||SUP0||"").replace(/\D/g,"");if(o.sup.length<10)o.sup="";
 o.pix=String((ent&&ent.pix)||pad.pix||"");
 if(!ent)return o;
@@ -653,16 +733,18 @@ if(LIC.busy)return;LIC.busy=1;
 var pid=String(firebaseConfig.projectId||""),raw=null,rede=true;
 try{var r=await fetch(LIC_URL+"?t="+Date.now(),{cache:"no-store"});if(!r.ok)throw 0;raw=await r.json();lcLS("lic_raw",JSON.stringify(raw))}
 catch(e){rede=false;try{raw=JSON.parse(lcLS("lic_raw")||"null")}catch(x){raw=null}}
-Object.assign(LIC,licCalc(raw,pid,Date.now()));LIC.busy=0;licUi();
+LICRAW=raw;LIC.busy=0;licApply();
 if(manual)toast(rede?"Licença verificada.":"Sem conexão com o servidor de licença. Usando o último status salvo.")}
 function licPay(){var h="";
 if(LIC.val!=null)h+='<div class="r" style="margin-top:8px"><span class="m">Valor</span><b>'+brl(LIC.val)+'</b></div>';
 if(LIC.ate)h+='<div class="r" style="margin-top:8px"><span class="m">Vencimento</span><b>'+brDate(LIC.ate)+'</b></div>';
 if(LIC.pix)h+='<div class="m" style="margin-top:14px">Chave Pix</div><div class="lpx">'+esc(LIC.pix)+'</div><button class="bp" data-a="lcp">Copiar chave Pix</button>';
-return h+'<button class="bp ac" data-a="lsup">'+(LIC.pix?"Enviar comprovante pelo WhatsApp":"Falar com o suporte")+'</button>'}
-function licUi(){var e=$("lic");if(!e)return;var E=LIC.est,adm=!!(me&&me.r=="admin");
+return h+'<button class="bp ac" data-a="lsup">'+(LIC.pix?"Enviar comprovante ao suporte":"Falar com o suporte")+'</button>'}
+function licUi(){var e=$("lic");if(!e)return;var E=LIC.est,adm=!!(me&&me.r=="admin");if(me)LGN=0;
+if(E=="bloq"&&crOk()){e.hidden=false;e.className="lic red";e.innerHTML='<span>Acesso deste cliente bloqueado (você está no modo criador).</span>';return}
+if(E=="bloq"&&!me&&LGN){e.hidden=true;e.className="lic";e.innerHTML="";return}
 if(E=="bloq"){e.hidden=false;e.className="lic blk";
-e.innerHTML='<div class="lcb"><h2>Acesso suspenso</h2><p class="m">'+esc(LIC.msg||"A mensalidade do aplicativo está em atraso. Regularize o pagamento para voltar a usar.")+'</p>'+licPay()+'<button class="bp ol" data-a="lchk">Já paguei, verificar de novo</button>'+(me?'<button class="bp ol dg" data-a="out">Sair</button>':'')+'</div>';return}
+e.innerHTML='<div class="lcb"><h2>Acesso suspenso</h2><p class="m">'+esc(LIC.msg||"A mensalidade do aplicativo está em atraso. Regularize o pagamento para voltar a usar.")+'</p>'+licPay()+'<button class="bp ol" data-a="lchk">Já paguei, verificar de novo</button>'+(me?'<button class="bp ol dg" data-a="out">Sair</button>':'<button class="bp ol" data-a="lgn">Acesso do criador</button>')+'</div>';return}
 if(adm&&(E=="aviso"||E=="venc")){
 var t=E=="venc"?"Mensalidade vencida há "+(-LIC.d)+" dia(s). O acesso será bloqueado em "+(LIC.d+LIC.tol+1)+" dia(s).":(LIC.d==0?"Sua mensalidade vence hoje.":"Sua mensalidade vence em "+LIC.d+" dia(s) ("+brDate(LIC.ate)+").");
 e.hidden=false;e.className="lic"+(E=="venc"?" red":"");e.innerHTML='<span>'+t+'</span><button class="chip" data-a="lpay">Pagar</button>';return}
@@ -670,10 +752,8 @@ e.hidden=true;e.className="lic";e.innerHTML=""}
 function licSec(){if(!me||me.r!="admin")return"";var E=LIC.est,s;
 s=E=="livre"?"Sem plano cadastrado (uso liberado)":E=="bloq"?"Suspensa":E=="venc"?"Vencida há "+(-LIC.d)+" dia(s)":LIC.ate?"Ativa até "+brDate(LIC.ate)+(LIC.d>0?" ("+LIC.d+" dia(s))":LIC.d==0?" (vence hoje)":""):"Ativa";
 return sec_n("Licença")+'<div class="c"><div class="r"><b>Mensalidade</b><span style="text-align:right">'+s+'</span></div>'+(LIC.val!=null?'<div class="r" style="margin-top:8px"><span class="m">Valor</span><span>'+brl(LIC.val)+'</span></div>':'')+'<button class="bp ol" data-a="lpay">Como pagar</button><button class="bp ol" data-a="lchk">Verificar agora</button></div>'}
-A.sup=function(){if(!LIC.sup)return toast("O contato do suporte ainda não foi configurado.");
-wa("Olá! Preciso de ajuda com o aplicativo Admin Loja (versão "+APPN+").\nLoja: "+(LIC.nome||firebaseConfig.projectId||"-")+"\nUsuário: "+(me?me.n:"(sem login)")+"\n\nMeu problema: ",LIC.sup)};
-A.lsup=function(){if(!LIC.sup)return toast("O contato do suporte ainda não foi configurado.");
-wa("Olá! Estou enviando o comprovante da mensalidade do Admin Loja.\nLoja: "+(LIC.nome||firebaseConfig.projectId||"-")+(LIC.ate?"\nVencimento: "+brDate(LIC.ate):"")+(LIC.val!=null?"\nValor: "+brl(LIC.val):""),LIC.sup)};
+A.sup=function(){if(!me)return supSheet("Se você esqueceu a senha, peça ao administrador da sua loja. Para outros assuntos, fale com o suporte:");tkForm()};
+A.lsup=function(){supSheet("Para regularizar a mensalidade"+(LIC.val!=null?" ("+brl(LIC.val)+")":"")+", envie o comprovante para o contato abaixo."+(LIC.pix?" Chave Pix: "+esc(LIC.pix):""))};
 A.lcp=function(){var t=LIC.pix,ok=false,x=document.createElement("textarea"),bad=function(){toast("Não consegui copiar. Anote a chave exibida na tela.")};
 x.value=t;x.style.cssText="position:fixed;opacity:0";document.body.appendChild(x);x.select();try{ok=document.execCommand("copy")}catch(e){}x.remove();
 if(ok)return toast("Chave Pix copiada.");try{navigator.clipboard.writeText(t).then(function(){toast("Chave Pix copiada.")},bad)}catch(e){bad()}};
