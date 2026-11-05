@@ -15,7 +15,7 @@ function $(i){return document.getElementById(i)}
 var app=initializeApp(firebaseConfig),auth=AU.getAuth(app),fdb=FS.initializeFirestore(app,{localCache:FS.persistentLocalCache({})}),EM="@adminloja.app",unsubs=[],loaded={},need=[],BUSY=false,sec=null,
 SRT={prods:nm,cust:nm,users:nm,ord:function(a,b){return a.id-b.id},cash:function(a,b){return(a.ts||0)-(b.ts||0)}};
 function nm(a,b){return String(a.n||"").localeCompare(String(b.n||""))}
-function load(){DB={users:[],prods:[],cust:[],ord:[],cash:[],sep:[],audit:[],mov:[],cats:[],custos:[],pedidosweb:[],catalogo:[],tk:[],tkAll:[]}}
+function load(){DB={users:[],prods:[],cust:[],ord:[],cash:[],sep:[],audit:[],mov:[],cats:[],custos:[],pedidosweb:[],catalogo:[],tk:[],tkAll:[],hist:[]}}
 function dref(n,i){return FS.doc(fdb,n,String(i))}
 function cashId(i){return"o"+i}
 function cashOf(i,o){return{ts:uid(),tp:"entrada",v:tot(o),d:"Pedido #"+String(i).slice(-4),cat:"Vendas",dt:hoje(),oid:String(i)}}
@@ -65,8 +65,8 @@ var x=o.length;o+="xref\n0 "+ob.length+"\n0000000000 65535 f \n";for(i=1;i<ob.le
 o+="trailer\n<< /Size "+ob.length+" /Root 1 0 R >>\nstartxref\n"+x+"\n%%EOF";
 var u=new Uint8Array(o.length);for(i=0;i<o.length;i++)u[i]=o.charCodeAt(i)&255;return u}
 async function dl(name,b){
-if(Capacitor.isNativePlatform()){try{var s="",k;for(k=0;k<b.length;k+=8192)s+=String.fromCharCode.apply(null,b.subarray(k,k+8192));var f=await Filesystem.writeFile({path:name,data:btoa(s),directory:Directory.Cache});await Share.share({title:name,url:f.uri,dialogTitle:"Compartilhar PDF"})}catch(e){if(!/cancel/i.test(String(e&&e.message||e)))toast("Não foi possível gerar o arquivo.")}return}
-try{var u=URL.createObjectURL(new Blob([b],{type:/\.csv$/.test(name)?"text/csv":"application/pdf"})),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);toast("Arquivo gerado.")}catch(e){toast("Não foi possível gerar o PDF neste aparelho.")}}
+if(Capacitor.isNativePlatform()){try{var s="",k;for(k=0;k<b.length;k+=8192)s+=String.fromCharCode.apply(null,b.subarray(k,k+8192));var f=await Filesystem.writeFile({path:name,data:btoa(s),directory:Directory.Cache});await Share.share({title:name,url:f.uri,dialogTitle:/\.json$/.test(name)?"Compartilhar backup":"Compartilhar PDF"});return"ok"}catch(e){if(!/cancel/i.test(String(e&&e.message||e))){toast("Não foi possível gerar o arquivo.");return"erro"}return"cancel"}}
+try{var u=URL.createObjectURL(new Blob([b],{type:/\.csv$/.test(name)?"text/csv":/\.json$/.test(name)?"application/json":"application/pdf"})),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);toast("Arquivo gerado.");return"ok"}catch(e){toast("Não foi possível gerar o arquivo neste aparelho.");return"erro"}}
 function X(){$("md").hidden=true;$("md").innerHTML=""}
 var PH="",PB=0;
 function pic(f,cb,er){var r=new FileReader(),bad=function(){er("Não consegui ler essa imagem. Use uma foto JPG ou PNG.")};r.onerror=bad;r.onload=function(){var im=new Image();im.onerror=bad;im.onload=function(){var s=Math.min(1,320/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.max(1,Math.round(im.width*s));c.height=Math.max(1,Math.round(im.height*s));c.getContext("2d").drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.75))};im.src=r.result};r.readAsDataURL(f)}
@@ -87,7 +87,7 @@ return'<label>'+f[1]+i+'</label>'}).join("")+(del?'<button class="bp ol dg" data
 phv();$("ok").onclick=function(){if(PB)return toast("Aguarde a foto terminar de carregar.");var o={};fs.forEach(function(f){var e=$("f_"+f[0]);o[f[0]]=f[2]=="n"?parseFloat(e.value)||0:f[2]=="m"||f[2]=="r"?pf(e.value):f[2]=="f"?PH:f[2]=="h"?"":e.value.trim()});cb(o)}}
 
 function R(){if(!me){login();return}if(!ready()){$("app").innerHTML='<header><h1>Admin Loja</h1></header><main><p class="m" style="text-align:center;padding:40px 0">Carregando dados…</p></main>';return}
-if(FTAB[tab]&&!feat(tab))tab="home";if(tab=="cria"&&!crOk())tab="cfg";var t=[["home","Início","home"],["ord","Pedidos","list"],["sep","Separar","check"],["prod","Produtos","box"],["cust","Clientes","users"]];if(G()){t.splice(2,0,["site","Site","globe"]);t.push(["cash","Financeiro","wallet"])}t=t.filter(function(x){return feat(x[0])});
+if(FTAB[tab]&&!feat(tab))tab="home";if((tab=="cria"||tab=="hist")&&!crOk())tab="cfg";var t=[["home","Início","home"],["ord","Pedidos","list"],["sep","Separar","check"],["prod","Produtos","box"],["cust","Clientes","users"]];if(G()){t.splice(2,0,["site","Site","globe"]);t.push(["cash","Financeiro","wallet"])}t=t.filter(function(x){return feat(x[0])});
 var fb={ord:"no",prod:"np",cust:"nc2",cash:"nl",users:"nu"}[tab];if(tab!="ord"&&!G())fb=0;
 $("app").innerHTML='<header><h1>'+T[tab]+(navigator.onLine?'':' <span class="m" style="font-size:.9rem">· offline</span>')+'</h1>'+(tab=="home"?'<button class="ib" data-a="tab" data-i="cfg" aria-label="Configurações">'+ic("gear")+'</button>':'')+'</header><main>'+(RU?BAN:"")+V[tab]()+'</main>'+(fb?'<button class="fab" data-a="'+fb+'" aria-label="Novo">'+ic("plus")+'</button>':'')+'<nav>'+t.map(function(x){return'<button class="'+(tab==x[0]?"on":"")+'" data-a="tab" data-i="'+x[0]+'">'+ic(x[2])+'<span>'+x[1]+'</span>'+(x[0]=="site"&&webNovos()?'<i class="bdg">'+webNovos()+'</i>':'')+'</button>'}).join("")+'</nav>'}
 function login(){$("app").innerHTML='<div class="lg"><h1>Admin Loja</h1><p class="m" style="margin-bottom:24px">Entre para continuar.</p><label>Usuário<input id="lu" autocapitalize="none" autocomplete="username"></label><label>Senha<input id="lp" type="password" autocomplete="current-password"></label><button class="bp" id="lb">Entrar</button><div id="fs"></div><button class="bp ol" data-a="sup">Falar com o suporte</button><p class="m" style="text-align:center;margin-top:24px">Versão '+APPN+'</p></div>';
@@ -107,7 +107,7 @@ return h+(list.length?list.map(function(c){return'<div class="c r"><div><b>'+esc
 A.cf=function(i){cf=i;R()}
 
 
-A.tab=function(i){if(i=="aud"&&me.r!="admin"||i=="rel"&&!G()||i=="users"&&me.r!="admin"||i=="perm"&&me.r!="admin"||i=="cat"&&!G()||i=="site"&&!G()||i=="loja"&&!G())return toast("Sem permissão para esta área.");if(i=="cria"&&!crOk())return toast("Sem permissão para esta área.");if(FTAB[i]&&!feat(i))return toast("Recurso não liberado para esta loja.");if(i=="ord")ODF="";if(i=="prod")PLOW=0;tab=i;Q="";R();scrollTo(0,0)};A.fl=function(i){flt=i;R()};A.x=X;A.x2=function(){$("sh").hidden=true;$("sh").innerHTML=""};A.out=function(){AU.signOut(auth)};
+A.tab=function(i){if(i=="aud"&&me.r!="admin"||i=="rel"&&!G()||i=="users"&&me.r!="admin"||i=="perm"&&me.r!="admin"||i=="cat"&&!G()||i=="site"&&!G()||i=="loja"&&!G())return toast("Sem permissão para esta área.");if((i=="cria"||i=="hist")&&!crOk())return toast("Sem permissão para esta área.");if(FTAB[i]&&!feat(i))return toast("Recurso não liberado para esta loja.");if(i=="ord")ODF="";if(i=="prod")PLOW=0;tab=i;Q="";R();scrollTo(0,0)};A.fl=function(i){flt=i;R()};A.x=X;A.x2=function(){$("sh").hidden=true;$("sh").innerHTML=""};A.out=function(){AU.signOut(auth)};
 A.phx=function(){PH="";phv()};
 A.nc2=function(i){var c=i?g(DB.cust,i):{};F(i?"Editar cliente":"Novo cliente",[["n","Nome"],["t","Telefone (com DDD)"],["e","E-mail"],["a","Endereço"],["o","Observações","t"]],c,function(o){if(!o.n)return toast("Informe o nome.");
 var r={n:o.n,t:o.t,e:o.e,a:o.a,o:o.o};(i?FS.updateDoc(dref("cust",i),r):FS.setDoc(dref("cust",uid()),r)).catch(fail);X();R()},i?["dc",i]:0)};
@@ -369,7 +369,7 @@ var np=0,fr=0,ln=0,atr=0,all={},h;ks.forEach(function(k){var d=days[k];np+=d.ord
 var pc=ln?Math.round(fr/ln*100):0;
 h='<div class="gr3">'+card("Pedidos",np)+card("Atrasados",atr,atr?"":"")+card("Concluído",pc+"%")+'</div>'+bar(pc,10)+'<div class="tb"><button class="chip on" data-a="spdf">PDF / imprimir</button><button class="chip" data-a="scsv">CSV</button></div>';
 if(ks.length>1)h+='<div class="c"><b class="h" style="font-size:1.1rem">Total do período</b>'+Object.keys(all).map(function(p){return all[p]}).sort(function(a,b){return a.n.localeCompare(b.n)}).map(function(r){return'<div class="r" style="padding:8px 0;border-top:1px solid var(--ln)"><span class="it">'+thumb(pimg(r.pid))+'<span>'+esc(r.n)+'</span></span><b>'+qf(r.need)+' '+esc((r.ap||"un.").toLowerCase())+'</b></div>'}).join("")+'</div>';
-ks.forEach(function(k){var d=days[k],nd=d.ords.filter(function(o){return ost(o)=="concluído"}).length,p=d.ords.length?Math.round(nd/d.ords.length*100):0;h+='<div class="c"><div class="r"><b class="h" style="font-size:1.15rem">'+fdw(k)+(k<todayI()?' · <span style="color:#d0665a">anterior</span>':k==todayI()?' · hoje':'')+'</b><span class="m">'+d.ords.length+' pedido(s) · '+nd+' concluído(s)</span></div>'+bar(p)+d.ords.slice().sort(function(a,b){return a.id-b.id}).map(orow).join("")+'</div>'});
+ks.forEach(function(k){var d=days[k],p=dayStat(d);h+='<div class="c"><div class="r"><b class="h" style="font-size:1.15rem">'+fdw(k)+(k<todayI()?' · <span style="color:#d0665a">anterior</span>':k==todayI()?' · hoje':'')+'</b><span class="m">'+d.ords.length+' pedido(s) · '+p+'%</span></div>'+bar(p)+Object.keys(d.prods).map(function(x){return d.prods[x]}).sort(function(a,b){return a.n.localeCompare(b.n)}).map(function(r){return prow(k,r)}).join("")+sec_n("Pedidos deste dia")+d.ords.slice().sort(function(a,b){return a.cn.localeCompare(b.cn)}).map(oc).join("")+'</div>'});
 return h};
 function sget(k){var p=k.split("|"),dt=p[0],pid=p.slice(1).join("|"),d=sepData(dt,dt)[dt];return{dt:dt,pid:pid,r:d&&d.prods[pid]}}
 function sepSave(k,q){var s=sget(k),r=s.r;if(!r)return;q=rq(Math.max(0,q));var b=FS.writeBatch(fdb);
@@ -388,15 +388,6 @@ A.scsv=function(){var days=sepData(SPF.a,SPF.b),ks=Object.keys(days).sort(),rows
 ks.forEach(function(k){var d=days[k];Object.keys(d.prods).map(function(x){return d.prods[x]}).forEach(function(r){rows.push([fd(k),r.n,r.ap||"",qf(r.need),qf(r.q),qf(Math.max(0,rq(r.need-r.q))),pst(r),r.lines.map(function(l){return"#"+num(l.o.id)+" "+l.o.cn+" ("+qf(l.q)+")"}).join(" | ")])})});dlCsv("separacao.csv",rows)};
 
 function semData(){var l=DB.ord.filter(function(o){return!o.de&&o.s!="cancelado"&&o.s!="entregue"});if(!l.length)return"";return'<div class="c"><b class="h" style="font-size:1.1rem">Entrega a definir</b><p class="m">'+l.length+' pedido(s) sem data de entrega. Defina a data (Editar pedido) para incluí-los na separação.</p>'+l.slice().sort(function(a,b){return b.id-a.id}).map(oc).join("")+'</div>'}
-/* ----- separação individual por pedido -----
-   Status guardado na coleção "sep" já existente (sem regra nova): doc "o_<idPedido>", campos iguais aos atuais.
-   q: 0 = pendente, 1 = separando, 2 = concluído. Não altera o pedido nem o status comercial. */
-var OSN=["pendente","separando","concluído"];
-function osRec(o){var k="o_"+o.id;for(var i=0;i<DB.sep.length;i++){if(DB.sep[i].id==k)return DB.sep[i]}return null}
-function osQ(o){var r=osRec(o);return Math.max(0,Math.min(2,Math.floor(Number(r&&r.q)||0)))}
-function ost(o){return OSN[osQ(o)]}
-function orow(o){var st=ost(o),r=osRec(o),cl={"concluído":"sp-c","separando":"sp-a","pendente":"sp-p"}[st];return'<div class="r tap" data-a="od" data-i="'+o.id+'" style="padding:12px 0;border-top:1px solid var(--ln)"><div style="flex:1;min-width:0"><b class="h" style="font-size:1.3rem">#'+num(o.id)+'</b><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis">'+esc(o.cn)+'</div><div class="m">Entrega: '+(o.de?fd(o.de):"a definir")+(late(o)?' · <b style="color:#d0665a">atrasado</b>':'')+(r&&r.un&&st!="pendente"?' · '+esc(r.un):'')+'</div></div><button class="pill '+cl+'" data-a="sos" data-i="'+o.id+'" style="min-width:116px;padding:12px 16px;font-weight:600">'+st+'</button></div>'}
-A.sos=function(i){var o=DB.ord.filter(function(x){return String(x.id)==String(i)})[0];if(!o||o.s=="cancelado")return;var oq=osQ(o),nq=oq>=2?0:oq+1,b=FS.writeBatch(fdb);b.set(dref("sep","o_"+o.id),{dt:o.de||"",pid:"o:"+o.id,n:o.cn||"",q:nq,uid:me.id,un:me.n,ts:Date.now()});aud(b,"separacao","separacao","Separação do pedido #"+num(o.id)+" ("+(o.cn||"")+"): "+OSN[oq]+" → "+OSN[nq],{ref:o.id,num:num(o.id),ch:[chg("separação",OSN[oq],OSN[nq])]});b.commit().catch(fail)};
 L.sep=function(){return L.sep0()+semData()};
 
 /* ----- Relatórios (financeiro/vendas) ----- */
@@ -496,8 +487,8 @@ A.odx=function(){ODF="";R()};A.plx=function(){PLOW=0;R()};
 function crow(i0,t,sub,a,i){return'<button class="c r tap" data-a="'+a+'"'+(i?' data-i="'+i+'"':'')+' style="width:100%;text-align:left;font:inherit;color:inherit"><div class="it"><div class="av">'+ic(i0)+'</div><div><b>'+t+'</b>'+(sub?'<div class="m">'+sub+'</div>':'')+'</div></div></button>'}
 V.cfg=function(){var ad=me.r=="admin",h='<p class="m" style="margin:0 0 6px">'+esc(me.n)+' · '+me.r+'</p>'+sec_n("Aparência")+'<div class="c"><b>Tamanho do texto</b><div class="tb" style="margin:12px 0 8px;flex-wrap:wrap">'+[["p","Pequeno"],["n","Normal"],["g","Grande"],["x","Extra grande"]].map(function(x){return'<button class="chip'+(PF.fs==x[0]?" on":"")+'" data-a="fz" data-i="'+x[0]+'">'+x[1]+'</button>'}).join("")+'</div><div class="m">Vale só para o seu usuário e fica salvo.</div></div>';
 if(G())h+=sec_n("Gestão")+(feat("rel")?crow("list","Relatórios","Vendas e entregas por período","tab","rel"):"")+(feat("loja")?crow("globe","Loja online","Site, entrega e catálogo","tab","loja"):"")+(feat("cat")?crow("cat","Categorias de produtos","Criar, renomear, unificar e excluir","tab","cat"):"")+(feat("pc")?crow("pdf","Catálogo em PDF","","pc"):"")+(feat("wk")?crow("chat","Catálogo no WhatsApp","","wk"):"");
-if(ad)h+=sec_n("Administração")+crow("users","Usuários","Criar, editar e excluir","tab","users")+crow("shield","Permissões","Quem pode fazer o quê","tab","perm")+(feat("aud")?crow("check","Histórico de atividades","Auditoria","tab","aud"):"")+(feat("bk")?crow("share","Backup","Copiar os dados","bk")+crow("box","Restaurar backup","","rs"):"");
-return h+updSec()+licSec()+sec_n("Suporte")+crow("chat","Falar com o suporte","Abrir um chamado","sup")+crow("list","Meus chamados",tkSub(),"tab","tk")+(crOk()?sec_n("Criador")+crow("shield","Painel do criador","Licença, recursos e chamados","tab","cria"):"")+sec_n("Conta")+'<button class="bp ol dg" data-a="out">Sair</button>'};
+if(ad)h+=sec_n("Administração")+crow("users","Usuários","Criar, editar e excluir","tab","users")+crow("shield","Permissões","Quem pode fazer o quê","tab","perm")+(feat("aud")?crow("check","Histórico de atividades","Auditoria","tab","aud"):"")+(feat("bk")?crow("share","Backup","Gerar arquivo e compartilhar","bk")+crow("box","Restaurar backup","Voltar os dados de um arquivo","rs"):"");
+return h+updSec()+licSec()+sec_n("Suporte")+crow("chat","Falar com o suporte","Abrir um chamado","sup")+crow("list","Meus chamados",tkSub(),"tab","tk")+(crOk()?sec_n("Criador")+crow("shield","Painel do criador","Licença, recursos e chamados","tab","cria")+crow("list","Histórico de atualizações","Registro das mudanças de cada versão","tab","hist"):"")+sec_n("Conta")+'<button class="bp ol dg" data-a="out">Sair</button>'};
 V.perm=function(){var Y="✔",N="—",rows=[["Criar pedidos e separar",Y,Y,Y],["Editar, cancelar e excluir pedidos",Y,Y,N],["Produtos, preços e estoque",Y,Y,"só baixa por venda"],["Custos, margens e markup",Y,Y,N],["Clientes e categorias",Y,Y,N],["Financeiro e relatórios",Y,Y,N],["Usuários e permissões",Y,N,N],["Histórico de atividades",Y,N,N],["Backup e restauração",Y,N,N]];
 return'<button class="chip on" data-a="tab" data-i="cfg">← Configurações</button><p class="m" style="margin-top:12px">Estas regras são aplicadas pelo servidor (Firebase), não só escondidas na tela. Para mudar o perfil de alguém, abra Usuários e toque no usuário.</p><div class="c" style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><tr><th style="text-align:left;padding:6px 4px">Ação</th><th>Adm.</th><th>Ger.</th><th>Vend.</th></tr>'+rows.map(function(r){return'<tr>'+r.map(function(c,k){return'<td style="padding:8px 4px;border-top:1px solid var(--ln);'+(k?'text-align:center;':'')+'">'+c+'</td>'}).join("")+'</tr>'}).join("")+'</table></div><button class="bp" data-a="tab" data-i="users">Gerenciar usuários</button>'};
 /* ----- categorias (administração) ----- */
@@ -608,7 +599,8 @@ var k=0;(function nx(){if(k>=ops.length){SYN=0;if(manual)toast("Catálogo public
 function autoSync(){if(!G()||RU||SYN||!LJ.pub||Date.now()-LASTSYN<30000)return;clearTimeout(STM);STM=setTimeout(function(){syncCat(false)},2500)}
 
 /* ===== v4.1: atualização do aplicativo pela internet (sem baixar APK) ===== */
-var APPV=4005,APPN="4.5",UP={latest:null,min:+(function(){try{return localStorage.getItem("anele_minb")}catch(e){return 0}})()||0,waiting:false,dismissed:false,busy:false,go:false};
+/* APPV (build) e APPN (versão) são carimbados pelo Publicar a cada publicação. Não edite à mão. */
+var APPV=0,APPN="dev",UP={latest:null,min:+(function(){try{return localStorage.getItem("anele_minb")}catch(e){return 0}})()||0,waiting:false,dismissed:false,busy:false,go:false};
 function updMin(){return Math.max(UP.min||0,(UP.latest&&UP.latest.min)||0)}
 function updAvail(){return!!(UP.latest&&UP.latest.build>APPV)||UP.waiting}
 function updUi(){var e=$("upd");if(!e)return;var mand=APPV<updMin();
@@ -642,6 +634,100 @@ if(String(firebaseConfig.apiKey).indexOf("COLE")==0)$("app").innerHTML='<div cla
 else{$("app").innerHTML='<p class="m" style="text-align:center;padding-top:40vh">Carregando…</p>';
 AU.onAuthStateChanged(auth,function(u){if(BUSY)return;if(!u){unsub();me=null;PF={fs:"n",fav:[]};applyFs();GENDONE=0;R();return}enter(u)})}
 
+/* ===== v5: backup em arquivo e histórico de atualizações (só criador) ===== */
+var HE=null,HISTU=0,BKD=null;
+T.hist="Histórico de atualizações";
+function vparse(s){var m=/^(\d+)\.(\d+)(?:\.(\d+))?$/.exec(String(s||"").trim());return m?[+m[1],+m[2],+(m[3]||0)]:null}
+function vcmp(a,b){var x=vparse(a),y=vparse(b),i;if(!x||!y)return 0;for(i=0;i<3;i++)if(x[i]!==y[i])return x[i]<y[i]?-1:1;return 0}
+/* ----- backup: arquivo .json com data, hora e versão ----- */
+function p2(n){return(n<10?"0":"")+n}
+function bkStamp(){var d=new Date();return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())+"_"+p2(d.getHours())+p2(d.getMinutes())}
+var BKKEYS=[["prods","Produtos"],["cust","Clientes"],["ord","Pedidos"],["cash","Movimentos de caixa"],["cats","Categorias"],["custos","Custos"]];
+function bkBuild(){var D={},c={};BKKEYS.forEach(function(k){D[k[0]]=DB[k[0]]||[];c[k[0]]=D[k[0]].length});return{tipo:"anele-backup",formato:1,app:{nome:"Anelê Gestão",versao:APPN,build:APPV},loja:String(LIC.nome||firebaseConfig.projectId||""),projeto:String(firebaseConfig.projectId||""),geradoEm:new Date().toISOString(),contagem:c,dados:D}}
+function bkTotal(c){var t=0;Object.keys(c).forEach(function(k){t+=c[k]});return t}
+function bkLast(){try{return JSON.parse(localStorage.getItem("anele_lastbk"))}catch(e){return null}}
+function bkCard(ok,tit,txt){return'<div class="c" style="border-color:'+(ok?"var(--gn,#5a9a6a)":"#d0665a")+'"><b>'+tit+'</b><div class="m" style="margin-top:6px;white-space:pre-wrap">'+txt+'</div></div>'}
+A.bk=function(){var lb=bkLast();P("Backup","",'<p class="m">O backup é um arquivo .json com produtos, clientes, pedidos, caixa, categorias e custos. Guarde em um lugar seguro (Google Drive, e-mail ou WhatsApp). Usuários e senhas não entram no backup.</p><div class="c"><div class="m">Último backup feito neste aparelho</div>'+(lb?'<b>'+esc(lb.n)+'</b><div class="m">'+esc(lb.dt)+' · versão '+esc(lb.v)+' · '+lb.c+' registros</div>':'<b>Nenhum ainda</b>')+'</div><div id="bkr"></div>','<button class="bp" data-a="bkg">Gerar e compartilhar backup</button><button class="bp ol" data-a="rs">Restaurar um backup</button>')};
+A.bkg=async function(){var r=$("bkr");try{var o=bkBuild(),n="anele-backup-"+bkStamp()+"-v"+APPN+".json",st=await dl(n,new TextEncoder().encode(JSON.stringify(o))),tot=bkTotal(o.contagem);
+if(st=="ok"){try{localStorage.setItem("anele_lastbk",JSON.stringify({n:n,dt:hoje(),v:APPN,c:tot}))}catch(e){}var b=FS.writeBatch(fdb);aud(b,"backup_gerado","sistema","Backup gerado ("+tot+" registros, versão "+APPN+")");b.commit().catch(function(){});if(r)r.innerHTML=bkCard(1,"Backup concluído",esc(n)+"\n"+tot+" registros · versão "+esc(APPN));toast("Backup concluído.")}
+else if(st=="cancel"){if(r)r.innerHTML=bkCard(0,"Backup não enviado","O compartilhamento foi cancelado. Toque em Gerar de novo e escolha onde guardar o arquivo.");toast("Compartilhamento cancelado.")}
+else if(r)r.innerHTML=bkCard(0,"Não foi possível gerar o backup","Tente de novo. Se o erro continuar, avise o suporte.")}catch(e){console.error(e);if(r)r.innerHTML=bkCard(0,"Não foi possível gerar o backup",esc(String(e&&e.message||e)));toast("Erro ao gerar o backup.")}};
+function bkCheck(t){var d,meta=null,D,bad=null,ids,c={},tot=0;
+try{d=JSON.parse(t)}catch(e){return{err:"Não consegui ler o arquivo. Ele precisa ser um backup .json do Anelê."}}
+if(!d||typeof d!="object"||Array.isArray(d))return{err:"O arquivo não tem o formato de um backup do Anelê."};
+if(d.tipo=="anele-backup"){if(d.formato!==1)return{err:"Formato de backup não reconhecido ("+esc(String(d.formato))+"). Atualize o aplicativo e tente de novo."};if(!d.dados||typeof d.dados!="object")return{err:"O backup não contém dados."};D=d.dados;meta=d}
+else if(Array.isArray(d.prods)&&Array.isArray(d.ord))D=d;else return{err:"Este arquivo não parece ser um backup do Anelê."};
+["prods","cust","ord","cash"].forEach(function(k){if(!Array.isArray(D[k]))bad=bad||'Faltam os dados de "'+k+'" no backup.'});
+["cats","custos"].forEach(function(k){if(D[k]!==undefined&&!Array.isArray(D[k]))bad=bad||'Os dados de "'+k+'" estão inválidos.'});
+if(bad)return{err:bad};
+var num=function(v){return typeof v=="number"&&isFinite(v)};
+BKKEYS.forEach(function(kk){var k=kk[0],l=D[k];if(bad||!l)return;ids={};
+l.forEach(function(x,i){if(bad)return;var id;if(!x||typeof x!="object"||Array.isArray(x))return bad='Registro inválido em "'+k+'" (item '+(i+1)+").";
+id=k=="cash"&&x.oid?cashId(x.oid):x.id;if(id===undefined||id===null||String(id)==="")return bad='Registro sem identificação em "'+k+'" (item '+(i+1)+").";
+id=String(id);if(/[\/]/.test(id))return bad='Identificação inválida em "'+k+'" (item '+(i+1)+").";if(ids[id])return bad='Registro repetido em "'+k+'" (item '+(i+1)+").";ids[id]=1;
+if(k=="prods"&&(typeof x.n!="string"||!num(x.pr)||(x.st!==undefined&&!num(x.st))))bad='Produto inválido (item '+(i+1)+").";
+if(k=="cust"&&typeof x.n!="string")bad='Cliente inválido (item '+(i+1)+").";
+if(k=="ord"&&(!Array.isArray(x.items)||typeof x.s!="string"))bad='Pedido inválido (item '+(i+1)+").";
+if(k=="cash"&&!num(x.v))bad='Movimento de caixa inválido (item '+(i+1)+").";});
+c[k]=l.length;tot+=l.length});
+if(bad)return{err:bad};if(tot>200000)return{err:"O backup tem registros demais para restaurar por aqui."};
+return{ok:1,D:D,meta:meta,c:c}}
+function bkShow(r){var e=$("bkv");if(!e)return;BKD=null;
+if(r.err){e.innerHTML=bkCard(0,"Arquivo recusado",esc(r.err)+"\nNada foi alterado.");return}
+BKD=r;var m=r.meta,dt=m&&m.geradoEm?new Date(m.geradoEm):null,h='<div class="c"><b>Arquivo válido</b><div class="m" style="margin-top:6px">'+(m?"Gerado em "+(dt&&!isNaN(dt)?esc(dt.toLocaleString("pt-BR")):"data desconhecida")+" · versão "+esc(String(m.app&&m.app.versao||"?")):"Backup no formato antigo (sem data e versão)")+'</div>';
+if(m&&m.projeto&&m.projeto!==firebaseConfig.projectId)h+='<div class="m" style="color:#d0665a;margin-top:6px">Atenção: este backup é de outra loja ('+esc(String(m.loja||m.projeto))+').</div>';
+h+='<div style="margin-top:10px">'+BKKEYS.map(function(k){if(r.c[k[0]]===undefined)return"";return'<div class="r" style="padding:4px 0"><span>'+k[1]+'</span><span class="m">'+r.c[k[0]]+" no backup · "+(DB[k[0]]||[]).length+" agora</span></div>"}).join("")+'</div></div><p class="m">Restaurar substitui produtos, clientes, pedidos, caixa, categorias e custos atuais. Usuários e configurações não mudam. Antes, o app gera uma cópia de segurança do que existe agora.</p><button class="bp ac" data-a="bkr">Restaurar este backup</button>';e.innerHTML=h}
+A.rs=function(){BKD=null;P("Restaurar backup","",'<p class="m">Escolha o arquivo .json do backup. O app confere o arquivo antes de mudar qualquer coisa.</p><label class="bp ol" for="bkf" style="text-align:center">Escolher arquivo de backup</label><input class="hf" id="bkf" type="file" accept=".json,application/json,text/plain" data-bkf="1"><div id="bkv" style="margin-top:12px"></div><details style="margin-top:14px"><summary class="m">Tenho um backup antigo em texto</summary><textarea id="bt" rows="6" placeholder="Cole aqui o texto do backup antigo"></textarea><button class="bp ol" data-a="bkt">Conferir o texto colado</button></details>')};
+A.bkt=function(){bkShow(bkCheck(($("bt")||{}).value||""))};
+document.addEventListener("change",function(e){var t=e.target;if(!t||!t.dataset||t.dataset.bkf===undefined)return;var f=t.files&&t.files[0];if(!f)return;
+if(f.size>60*1024*1024){bkShow({err:"O arquivo é grande demais para ser um backup do Anelê."});t.value="";return}
+var r=new FileReader();r.onload=function(){bkShow(bkCheck(String(r.result)))};r.onerror=function(){bkShow({err:"Não consegui ler o arquivo."})};r.readAsText(f);t.value=""});
+function bkOps(d){var ops=[];BKKEYS.forEach(function(kk){var n=kk[0];if((n=="cats"||n=="custos")&&!d[n])return;var keep={};(d[n]||[]).forEach(function(x){var r=Object.assign({},x),id=String(n=="cash"&&x.oid?cashId(x.oid):x.id);delete r.id;
+if(n=="prods")r.st=Math.max(0,r.st||0);if(n=="cash"){r.ts=r.ts||Number(x.id)||uid();if(x.oid)r.oid=String(x.oid)}
+Object.keys(r).forEach(function(q){if(r[q]===undefined)delete r[q]});keep[id]=1;ops.push(function(b){b.set(dref(n,id),r)})});
+(DB[n]||[]).forEach(function(x){if(!keep[x.id])ops.push(function(b){b.delete(dref(n,x.id))})})});return ops}
+A.bkr=async function(){if(me.r!="admin")return toast("Somente administrador.");if(!BKD)return toast("Escolha um arquivo de backup primeiro.");
+if(!confirm("Substituir os dados atuais pelos do backup? Uma cópia de segurança será gerada antes."))return;
+var d=BKD.D,v=$("bkv"),st=await dl("anele-seguranca-"+bkStamp()+"-v"+APPN+".json",new TextEncoder().encode(JSON.stringify(bkBuild())));
+if(st!="ok"){if(v)v.insertAdjacentHTML("afterbegin",bkCard(0,"Restauração não iniciada",st=="cancel"?"Você cancelou a cópia de segurança. Guarde-a para poder restaurar.":"Não foi possível gerar a cópia de segurança. Nada foi alterado."));return}
+var ops=bkOps(d),k=0,tot=bkTotal(BKD.c);toast("Restaurando…");
+(function nx(){if(k>=ops.length){var b=FS.writeBatch(fdb);aud(b,"restauracao","sistema","Backup restaurado ("+tot+" registros)");b.commit().catch(function(){});BKD=null;if($("bkv"))$("bkv").innerHTML=bkCard(1,"Restauração concluída",tot+" registros restaurados.\nA cópia de segurança de antes foi gerada.");toast("Backup restaurado.");R();return}
+var b=FS.writeBatch(fdb);ops.slice(k,k+15).forEach(function(f){f(b)});k+=15;b.commit().then(nx).catch(function(e){console.error(e);if($("bkv"))$("bkv").innerHTML=bkCard(0,"A restauração parou no meio","Houve um erro e os dados podem estar incompletos. Restaure a cópia de segurança que foi gerada antes (arquivo anele-seguranca-…).");toast("Erro ao restaurar.")})})()};
+/* ----- histórico de atualizações ----- */
+function subHist(){if(HISTU||!me||!crOk())return;var st=FS.onSnapshot(FS.collection(fdb,"historico"),function(s){DB.hist=s.docs.map(function(d){var o=d.data();o.id=d.id;return o}).sort(function(a,b){return vcmp(b.v,a.v)||(b.ts||0)-(a.ts||0)});if(me&&ready()&&(tab=="hist"||tab=="cria"))R()},function(){});HISTU=1;unsubs.push(function(){HISTU=0;st()})}
+V.hist=function(){var l=DB.hist||[],h='<button class="chip on" data-a="tab" data-i="cria">← Painel do criador</button><div class="r" style="margin:14px 0 6px"><b class="h" style="font-size:1.2rem">'+l.length+' atualização(ões)</b><button class="chip on" data-a="hn">+ Nova</button></div><p class="m">Versão instalada agora: <b>'+esc(APPN)+'</b> (build '+APPV+')</p>';
+if(!l.length)h+=empty("Nenhum registro ainda.")+'<button class="bp ac" data-a="hs">Criar o primeiro registro desta versão</button>';
+l.forEach(function(e){h+='<div class="c"><div class="r"><b>Versão '+esc(e.v)+'</b><span class="m">'+fd(e.dt)+'</span></div>'+(e.itens||[]).map(function(it,k){return'<button data-a="hv" data-i="'+e.id+'|'+k+'" style="display:flex;justify-content:space-between;gap:10px;width:100%;text-align:left;background:none;border:0;border-top:1px solid var(--ln);padding:10px 0;color:inherit;font:inherit"><span>'+esc(it.t)+'</span><span class="m">›</span></button>'}).join("")+'<div style="margin-top:10px"><button class="chip" data-a="he" data-i="'+e.id+'">Editar</button></div></div>'});return h};
+A.hv=function(a){var p=a.split("|"),e=g(DB.hist,p[0]),it=e&&(e.itens||[])[+p[1]];if(!it)return;P(esc(it.t),"Versão "+esc(e.v)+" · "+fd(e.dt),(it.d?'<div class="c" style="white-space:pre-wrap">'+esc(it.d)+'</div>':'<p class="m">Sem descrição detalhada.</p>')+(it.im||[]).map(function(s){return'<img alt="" src="'+esc(s)+'" style="width:100%;border-radius:14px;margin-bottom:12px">'}).join(""))};
+function hsync(){if(!HE)return;var v=$("h_v"),d=$("h_dt");if(v)HE.v=v.value.trim();if(d)HE.dt=d.value;HE.itens.forEach(function(it,k){var t=$("h_t_"+k),x=$("h_d_"+k);if(t)it.t=t.value;if(x)it.d=x.value})}
+function hfm(){var sc=$("md").querySelector(".pb"),y=sc?sc.scrollTop:0,e=HE;P(e.id?"Editar atualização":"Nova atualização","",'<label>Versão<input id="h_v" value="'+esc(e.v)+'" inputmode="decimal" placeholder="ex.: 5.0.1"></label><label>Data<input id="h_dt" type="date" value="'+esc(e.dt)+'"></label><div class="r" style="margin:6px 0 8px"><b class="h" style="font-size:1.2rem">Alterações</b><button class="chip on" data-a="hai">+ alteração</button></div>'+e.itens.map(function(it,k){return'<div class="c"><label>Resumo curto<input id="h_t_'+k+'" maxlength="120" value="'+esc(it.t)+'"></label><label>Descrição detalhada (opcional)<textarea id="h_d_'+k+'" rows="4">'+esc(it.d)+'</textarea></label>'+(it.im||[]).map(function(s,j){return'<div class="r" style="margin-bottom:8px"><img alt="" src="'+esc(s)+'" style="height:64px;border-radius:10px"><button class="chip" data-a="hri" data-i="'+k+'|'+j+'">Remover imagem</button></div>'}).join("")+'<div class="w" style="margin:0"><label class="chip on" for="hf_'+k+'">+ imagem</label><button class="chip dg" data-a="hrm" data-i="'+k+'">Excluir alteração</button></div><input class="hf" id="hf_'+k+'" type="file" accept="image/*" data-hph="'+k+'"></div>'}).join("")+(e.id?'<button class="bp ol dg" data-a="hdl">Excluir esta atualização</button>':""),'<button class="bp" data-a="hsv">Salvar</button>');sc=$("md").querySelector(".pb");if(sc)sc.scrollTop=y}
+A.hn=function(){HE={id:"",v:vparse(APPN)?APPN:"",dt:todayI(),itens:[{t:"",d:"",im:[]}]};hfm()};
+A.he=function(i){var e=g(DB.hist,i);if(!e)return;HE=JSON.parse(JSON.stringify({id:e.id,v:e.v,dt:e.dt,itens:e.itens||[]}));HE.itens.forEach(function(it){it.im=it.im||[];it.d=it.d||""});hfm()};
+A.hs=function(){HE={id:"",v:vparse(APPN)?APPN:"",dt:todayI(),itens:[
+{t:"Tela inicial com atalhos",d:"Os cartões de pedidos pendentes, pagos e entregues, as entregas de hoje, os atrasados, o estoque baixo, o saldo do caixa e as barras do gráfico de vendas abrem a tela correspondente já filtrada.",im:[]},
+{t:"Suporte por chamado",d:"O botão Falar com o suporte abre um formulário com assunto, mensagem, e-mail e telefone. O criador responde pelo painel e o cliente acompanha em Meus chamados.",im:[]},
+{t:"Painel do criador",d:"Área protegida por usuário próprio e chave secreta, com controle da licença, dos recursos liberados para a loja e dos chamados.",im:[]},
+{t:"Versões organizadas e histórico",d:"A numeração passou a ser automática e sempre crescente (principal.secundária.correção). Este histórico registra o que mudou em cada atualização.",im:[]},
+{t:"Backup em arquivo",d:"O backup agora é um arquivo .json com data, hora e versão, que pode ser compartilhado. A restauração confere o arquivo e gera uma cópia de segurança antes.",im:[]}]};hfm()};
+A.hai=function(){hsync();HE.itens.push({t:"",d:"",im:[]});hfm()};
+A.hrm=function(k){hsync();if(HE.itens.length<2)return toast("A atualização precisa de ao menos uma alteração.");HE.itens.splice(+k,1);hfm()};
+A.hri=function(a){var p=a.split("|");hsync();HE.itens[+p[0]].im.splice(+p[1],1);hfm()};
+document.addEventListener("change",function(e){var t=e.target;if(!t||!t.dataset||t.dataset.hph===undefined||!HE)return;var f=t.files&&t.files[0],k=+t.dataset.hph;if(!f)return;hsync();var it=HE.itens[k];if(!it)return;if(it.im.length>=3){t.value="";return toast("No máximo 3 imagens por alteração.")}
+toast("Processando a imagem…");pic(f,function(u){it.im.push(u);hfm()},function(m){toast(m)});t.value=""});
+A.hsv=function(){hsync();var e=HE,v=e.v,vs=vparse(v),its,others,top=null;
+if(!vs)return toast("Informe a versão no formato 5.0.1 (ou 5.1).");if(!e.dt)return toast("Informe a data.");
+its=e.itens.filter(function(it){return String(it.t||"").trim()}).map(function(it){return{t:it.t.trim().slice(0,120),d:String(it.d||"").trim().slice(0,4000),im:(it.im||[]).slice(0,3)}});
+if(!its.length)return toast("Escreva o resumo de ao menos uma alteração.");
+others=(DB.hist||[]).filter(function(x){return x.id!==e.id});
+if(others.some(function(x){return vcmp(x.v,v)===0&&vparse(x.v)}))return toast("Já existe um registro da versão "+v+". Edite esse registro.");
+others.forEach(function(x){if(vparse(x.v)&&(!top||vcmp(x.v,top)>0))top=x.v});
+var old=e.id&&g(DB.hist,e.id),mudou=!old||vcmp(old.v,v)!==0;
+if(mudou&&top&&vcmp(v,top)<0)return toast("A versão "+v+" é menor que a mais recente registrada ("+top+"). Use um número maior.");
+var doc={v:vs.join("."),dt:e.dt,itens:its,by:me.n,ts:Date.now()};if(vs.length&&String(v).split(".").length==2)doc.v=v;
+if(JSON.stringify(doc).length>900000)return toast("Imagens demais nesta atualização. Remova alguma.");
+FS.setDoc(dref("historico",e.id||String(uid())),doc).then(function(){toast("Atualização registrada.")}).catch(crFail);X();tab="hist";R()};
+A.hdl=function(){if(!HE||!HE.id)return;if(!confirm("Excluir este registro do histórico?"))return;FS.deleteDoc(dref("historico",HE.id)).then(function(){toast("Registro excluído.")}).catch(crFail);X();R()};
+
 /* ===== v4: chamados de suporte, área do criador e recursos por cliente =====
    Chamados ficam na coleção "tickets" do Firebase da loja. Licença e recursos liberados ficam no
    documento loja/lic, que só o criador deve poder gravar (regras do Firebase). */
@@ -655,7 +741,7 @@ T.tk="Meus chamados";T.cria="Painel do criador";
 function feat(k){return!(LOV&&LOV.rec&&LOV.rec[k]===false)}
 function crOk(){var c=(LICRAW&&LICRAW.criador)||{},h=c.hash;return!!(h&&me&&me.r=="admin"&&String(c.usuario||"").toLowerCase()==String(me.u||"").toLowerCase()&&lcLS("anele_cr_"+me.id)===h)}
 function visU(u){var c=String((LICRAW&&LICRAW.criador&&LICRAW.criador.usuario)||"").toLowerCase();return!c||crOk()||String(u.u||"").toLowerCase()!==c}
-function licApply(){Object.assign(LIC,licCalc(LICRAW,String(firebaseConfig.projectId||""),Date.now()));licUi();if(me&&crOk())subTkAll()}
+function licApply(){Object.assign(LIC,licCalc(LICRAW,String(firebaseConfig.projectId||""),Date.now()));licUi();if(me&&crOk()){subTkAll();subHist()}}
 function licTxt(){var E=LIC.est;return E=="livre"?"Sem plano cadastrado (uso liberado)":E=="bloq"?"Suspensa":E=="venc"?"Vencida há "+(-LIC.d)+" dia(s)":LIC.ate?"Ativa até "+brDate(LIC.ate)+(LIC.d>0?" ("+LIC.d+" dia(s))":LIC.d==0?" (vence hoje)":""):"Ativa"}
 function fmtTel(d){d=String(d||"").replace(/\D/g,"");var m=/^55(\d{2})(\d{4,5})(\d{4})$/.exec(d);return m?"+55 ("+m[1]+") "+m[2]+"-"+m[3]:d}
 function copyTxt(t,ok){var x=document.createElement("textarea"),done=false,bad=function(){toast("Não consegui copiar. Segure o texto para copiar.")};x.value=t;x.style.cssText="position:fixed;opacity:0";document.body.appendChild(x);x.select();try{done=document.execCommand("copy")}catch(e){}x.remove();if(done)return toast(ok||"Copiado.");try{navigator.clipboard.writeText(t).then(function(){toast(ok||"Copiado.")},bad)}catch(e){bad()}}
@@ -674,7 +760,7 @@ function licSave(o){return FS.setDoc(dref("loja","lic"),Object.assign({on:true,b
 function tkMap(s){return s.docs.map(function(d){var o=d.data();o.id=d.id;return o}).sort(function(a,b){return(b.ts||0)-(a.ts||0)})}
 function refreshTk(){if(me&&ready()&&(tab=="tk"||tab=="cria"||tab=="cfg"))R()}
 function tkNotify(){if(TKS)DB.tk.forEach(function(t){if(t.resp&&TKS[t.id]===0)toast("O suporte respondeu: "+t.as)});TKS={};DB.tk.forEach(function(t){TKS[t.id]=t.resp?1:0})}
-function subTk(){unsubs.push(FS.onSnapshot(FS.query(FS.collection(fdb,"tickets"),FS.where("uid","==",me.id)),function(s){TKERR=false;DB.tk=tkMap(s);tkNotify();refreshTk()},function(){TKERR=true;DB.tk=[];refreshTk()}));subTkAll()}
+function subTk(){unsubs.push(FS.onSnapshot(FS.query(FS.collection(fdb,"tickets"),FS.where("uid","==",me.id)),function(s){TKERR=false;DB.tk=tkMap(s);tkNotify();refreshTk()},function(){TKERR=true;DB.tk=[];refreshTk()}));subTkAll();subHist()}
 function subTkAll(){if(TKALLU||!me||!crOk())return;var st=FS.onSnapshot(FS.collection(fdb,"tickets"),function(s){DB.tkAll=tkMap(s);refreshTk()},function(){});TKALLU=1;unsubs.push(function(){TKALLU=0;st()})}
 function tkSub(){var n=(DB.tk||[]).filter(function(t){return t.resp&&t.st=="respondido"}).length;return n?n+" com resposta":"Acompanhe suas solicitações"}
 function tkPill(s){return'<span class="pill '+(s=="respondido"?"st-pago":s=="fechado"?"st-entregue":"st-pendente")+'">'+esc(s)+'</span>'}
@@ -695,11 +781,12 @@ A.cro=async function(){var k=($("ck")||{}).value||"";if(k.length<8)return toast(
 var c=(LICRAW&&LICRAW.criador)||{};
 if(!c.hash){var sn='"criador": {"usuario": "'+String(me.u||"")+'", "hash": "'+h+'"},';$("sh").innerHTML='<div class="sc"><b class="h" style="font-size:1.2rem">Cadastrar chave</b><p class="m">Ainda não há chave no licencas.json. Copie a linha abaixo e cole dentro do arquivo, logo depois da primeira chave {. Depois entre de novo com a mesma chave.</p><textarea rows="4" readonly>'+esc(sn)+'</textarea><button class="bp" data-a="cpv" data-i="'+esc(sn)+'">Copiar linha</button><button class="bp ol" data-a="x2">Fechar</button></div>';return}
 if(h!==c.hash||String(c.usuario||"").toLowerCase()!==String(me.u||"").toLowerCase())return toast("Chave ou usuário incorretos.");
-lcLS("anele_cr_"+me.id,h);A.x2();subTkAll();toast("Modo criador ativado.");tab="cria";R()};
+lcLS("anele_cr_"+me.id,h);A.x2();subTkAll();subHist();toast("Modo criador ativado.");tab="cria";R()};
 V.cria=function(){var on=!!(LOV&&LOV.on),bq=on&&!!LOV.bq,ab=(DB.tkAll||[]).filter(function(t){return t.st!="fechado"}).length;
 return'<button class="chip on" data-a="tab" data-i="cfg">← Configurações</button>'+sec_n("Seu código de criador")+'<div class="c"><div class="m">Use este código nas regras do Firebase, no lugar de SEU_UID_DE_CRIADOR.</div><div class="lpx" style="word-break:break-all;margin-top:8px">'+esc(me.id)+'</div><button class="bp ol" data-a="cpv" data-i="'+esc(me.id)+'">Copiar código</button></div>'
 +sec_n("Licença deste cliente")+'<div class="c"><div class="r"><b>Situação</b><span style="text-align:right">'+licTxt()+'</span></div><div class="r" style="margin-top:8px"><span class="m">Controle</span><span>'+(on?"pelo painel":"pelo licencas.json")+'</span></div>'+(LIC.val!=null?'<div class="r" style="margin-top:8px"><span class="m">Valor</span><span>'+brl(LIC.val)+'</span></div>':'')+'<button class="bp" data-a="cl">Editar licença</button><button class="bp ol" data-a="cl30">+30 dias de prazo</button><button class="bp ol'+(bq?'':' dg')+'" data-a="clb">'+(bq?"Desbloquear acesso":"Bloquear acesso agora")+'</button>'+(on?'<button class="bp ol" data-a="clr">Voltar a usar o licencas.json</button>':'')+'</div>'
 +sec_n("O que está liberado para o cliente")+'<div class="c">'+FEATS.map(function(f,k){var o=feat(f[0]);return'<div class="r tap" data-a="rec" data-i="'+f[0]+'" style="padding:10px 0'+(k?';border-top:1px solid var(--ln)':'')+'"><span>'+f[1]+'</span><span class="pill '+(o?"st-pago":"st-cancelado")+'">'+(o?"liberado":"bloqueado")+'</span></div>'}).join("")+'</div><p class="m">Toque numa linha para liberar ou bloquear. Vale para todos os usuários desta loja.</p>'
++sec_n("Atualizações do aplicativo")+crow("list","Histórico de atualizações",(DB.hist||[]).length+" registro(s) · versão instalada "+esc(APPN),"tab","hist")
 +sec_n("Chamados recebidos ("+ab+" aberto(s))")+(TKERR?TKBAN:"")+((DB.tkAll||[]).length?DB.tkAll.map(function(t){return tkCard(t,1)}).join(""):empty("Nenhum chamado recebido."))};
 A.cl=function(){F("Licença",[["ate","Vencimento (vazio = sem vencimento)","d"],["val","Valor mensal (R$)","m"],["msg","Mensagem na tela de bloqueio","t"],["bq","Acesso","s",[["0","Liberado"],["1","Bloqueado"]]]],{ate:LIC.ate||"",val:LIC.val!=null?fm(LIC.val):"",msg:LIC.msg||"",bq:LOV&&LOV.on&&LOV.bq?"1":"0"},function(o){licSave({ate:o.ate||"",val:isNaN(o.val)?null:r2(o.val),msg:o.msg||"",bq:o.bq=="1"});X();R()})};
 A.cl30=function(){var b=LIC.ate&&LIC.ate>todayI()?LIC.ate:todayI();licSave({ate:addD(b,30),bq:false,val:LIC.val==null?null:LIC.val,msg:LIC.msg||""})};
