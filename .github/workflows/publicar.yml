@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Carimbar versão (única fonte: versao.json)
+      - name: Carimbar versao
         run: bash carimbar.sh
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
