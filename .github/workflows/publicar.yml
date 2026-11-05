@@ -18,19 +18,14 @@ jobs:
       url: ${{ steps.dep.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
-      - name: Carimbar versão
-        run: |
-          B=$((4004 + GITHUB_RUN_NUMBER))
-          N="4.$((B-4000))"
-          sed -i -E "s/BUILD=\"[0-9]+\"/BUILD=\"$B\"/" sw.js
-          sed -i -E "s/APPV=[0-9]+,APPN=\"[^\"]*\"/APPV=$B,APPN=\"$N\"/" app.js
-          sed -i -E "s/\"build\": *[0-9]+/\"build\": $B/; s/\"name\": *\"[^\"]*\"/\"name\": \"$N\"/" version.json
-          grep -o -E 'BUILD="[0-9]+"' sw.js
-          grep -o -E 'APPV=[0-9]+,APPN="[^"]*"' app.js
-          cat version.json
+        with:
+          fetch-depth: 0
+      - name: Carimbar versão (única fonte: versao.json)
+        run: bash carimbar.sh
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: .
       - id: dep
         uses: actions/deploy-pages@v4
+        
