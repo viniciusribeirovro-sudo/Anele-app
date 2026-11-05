@@ -369,7 +369,7 @@ var np=0,fr=0,ln=0,atr=0,all={},h;ks.forEach(function(k){var d=days[k];np+=d.ord
 var pc=ln?Math.round(fr/ln*100):0;
 h='<div class="gr3">'+card("Pedidos",np)+card("Atrasados",atr,atr?"":"")+card("Concluído",pc+"%")+'</div>'+bar(pc,10)+'<div class="tb"><button class="chip on" data-a="spdf">PDF / imprimir</button><button class="chip" data-a="scsv">CSV</button></div>';
 if(ks.length>1)h+='<div class="c"><b class="h" style="font-size:1.1rem">Total do período</b>'+Object.keys(all).map(function(p){return all[p]}).sort(function(a,b){return a.n.localeCompare(b.n)}).map(function(r){return'<div class="r" style="padding:8px 0;border-top:1px solid var(--ln)"><span class="it">'+thumb(pimg(r.pid))+'<span>'+esc(r.n)+'</span></span><b>'+qf(r.need)+' '+esc((r.ap||"un.").toLowerCase())+'</b></div>'}).join("")+'</div>';
-ks.forEach(function(k){var d=days[k],p=dayStat(d);h+='<div class="c"><div class="r"><b class="h" style="font-size:1.15rem">'+fdw(k)+(k<todayI()?' · <span style="color:#d0665a">anterior</span>':k==todayI()?' · hoje':'')+'</b><span class="m">'+d.ords.length+' pedido(s) · '+p+'%</span></div>'+bar(p)+Object.keys(d.prods).map(function(x){return d.prods[x]}).sort(function(a,b){return a.n.localeCompare(b.n)}).map(function(r){return prow(k,r)}).join("")+sec_n("Pedidos deste dia")+d.ords.slice().sort(function(a,b){return a.cn.localeCompare(b.cn)}).map(oc).join("")+'</div>'});
+ks.forEach(function(k){var d=days[k],nd=d.ords.filter(function(o){return ost(o)=="concluído"}).length,p=d.ords.length?Math.round(nd/d.ords.length*100):0;h+='<div class="c"><div class="r"><b class="h" style="font-size:1.15rem">'+fdw(k)+(k<todayI()?' · <span style="color:#d0665a">anterior</span>':k==todayI()?' · hoje':'')+'</b><span class="m">'+d.ords.length+' pedido(s) · '+nd+' concluído(s)</span></div>'+bar(p)+d.ords.slice().sort(function(a,b){return a.id-b.id}).map(orow).join("")+'</div>'});
 return h};
 function sget(k){var p=k.split("|"),dt=p[0],pid=p.slice(1).join("|"),d=sepData(dt,dt)[dt];return{dt:dt,pid:pid,r:d&&d.prods[pid]}}
 function sepSave(k,q){var s=sget(k),r=s.r;if(!r)return;q=rq(Math.max(0,q));var b=FS.writeBatch(fdb);
@@ -388,6 +388,15 @@ A.scsv=function(){var days=sepData(SPF.a,SPF.b),ks=Object.keys(days).sort(),rows
 ks.forEach(function(k){var d=days[k];Object.keys(d.prods).map(function(x){return d.prods[x]}).forEach(function(r){rows.push([fd(k),r.n,r.ap||"",qf(r.need),qf(r.q),qf(Math.max(0,rq(r.need-r.q))),pst(r),r.lines.map(function(l){return"#"+num(l.o.id)+" "+l.o.cn+" ("+qf(l.q)+")"}).join(" | ")])})});dlCsv("separacao.csv",rows)};
 
 function semData(){var l=DB.ord.filter(function(o){return!o.de&&o.s!="cancelado"&&o.s!="entregue"});if(!l.length)return"";return'<div class="c"><b class="h" style="font-size:1.1rem">Entrega a definir</b><p class="m">'+l.length+' pedido(s) sem data de entrega. Defina a data (Editar pedido) para incluí-los na separação.</p>'+l.slice().sort(function(a,b){return b.id-a.id}).map(oc).join("")+'</div>'}
+/* ----- separação individual por pedido -----
+   Status guardado na coleção "sep" já existente (sem regra nova): doc "o_<idPedido>", campos iguais aos atuais.
+   q: 0 = pendente, 1 = separando, 2 = concluído. Não altera o pedido nem o status comercial. */
+var OSN=["pendente","separando","concluído"];
+function osRec(o){var k="o_"+o.id;for(var i=0;i<DB.sep.length;i++){if(DB.sep[i].id==k)return DB.sep[i]}return null}
+function osQ(o){var r=osRec(o);return Math.max(0,Math.min(2,Math.floor(Number(r&&r.q)||0)))}
+function ost(o){return OSN[osQ(o)]}
+function orow(o){var st=ost(o),r=osRec(o),cl={"concluído":"sp-c","separando":"sp-a","pendente":"sp-p"}[st];return'<div class="r tap" data-a="od" data-i="'+o.id+'" style="padding:12px 0;border-top:1px solid var(--ln)"><div style="flex:1;min-width:0"><b class="h" style="font-size:1.3rem">#'+num(o.id)+'</b><div style="font-weight:600;overflow:hidden;text-overflow:ellipsis">'+esc(o.cn)+'</div><div class="m">Entrega: '+(o.de?fd(o.de):"a definir")+(late(o)?' · <b style="color:#d0665a">atrasado</b>':'')+(r&&r.un&&st!="pendente"?' · '+esc(r.un):'')+'</div></div><button class="pill '+cl+'" data-a="sos" data-i="'+o.id+'" style="min-width:116px;padding:12px 16px;font-weight:600">'+st+'</button></div>'}
+A.sos=function(i){var o=DB.ord.filter(function(x){return String(x.id)==String(i)})[0];if(!o||o.s=="cancelado")return;var oq=osQ(o),nq=oq>=2?0:oq+1,b=FS.writeBatch(fdb);b.set(dref("sep","o_"+o.id),{dt:o.de||"",pid:"o:"+o.id,n:o.cn||"",q:nq,uid:me.id,un:me.n,ts:Date.now()});aud(b,"separacao","separacao","Separação do pedido #"+num(o.id)+" ("+(o.cn||"")+"): "+OSN[oq]+" → "+OSN[nq],{ref:o.id,num:num(o.id),ch:[chg("separação",OSN[oq],OSN[nq])]});b.commit().catch(fail)};
 L.sep=function(){return L.sep0()+semData()};
 
 /* ----- Relatórios (financeiro/vendas) ----- */
