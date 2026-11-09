@@ -86,7 +86,7 @@ var u=new Uint8Array(o.length);for(i=0;i<o.length;i++)u[i]=o.charCodeAt(i)&255;r
 var PDFTXT="",CAPP={};
 function em(e){return String(e&&e.message||e||"erro desconhecido").slice(0,200)}
 function isCancel(e){return/cancel|abort|dismiss/i.test(String(e&&(e.message||e.name)||e))}
-function capP(n){try{var C=window.Capacitor;if(C&&C.registerPlugin){CAPP[n]=CAPP[n]||C.registerPlugin(n);return CAPP[n]}}catch(e){}return null}
+function capP(n){var C=window.Capacitor;try{if(C&&C.Plugins&&C.Plugins[n])return C.Plugins[n]}catch(e){}return CAPP[n]||null}
 function b64(b){var s="",k;for(k=0;k<b.length;k+=8192)s+=String.fromCharCode.apply(null,b.subarray(k,k+8192));return btoa(s)}
 /* Entrega de arquivo (PDF, CSV, backup). No APK: grava no cache e abre o compartilhamento do Android (WhatsApp, Drive, e-mail...).
    Se isso falhar, mostra o motivo e oferece o conteúdo como texto (copiar/compartilhar), em vez de ficar mudo. */
@@ -822,10 +822,11 @@ A.bk=function(){var lb=bkLast();P("Backup","",'<p class="m">O backup é um arqui
 A.dgn=async function(){var r=$("bkr"),L2=[],nat=Capacitor.isNativePlatform();if(r)r.innerHTML=bkCard(1,"Testando…","Aguarde alguns segundos.");
 function add(ok,n,t){L2.push((ok?"OK  ":"FALHA ")+n+(t?": "+t:""))}
 add(true,"Ambiente",(nat?"aplicativo Android (APK)":"navegador")+" · versão "+APPN+" ("+APPV+")");
-if(nat){var sh=capP("Share"),fs=capP("Filesystem");
-try{var cs=await sh.canShare();add(!!(cs&&cs.value!==false),"Plugin de compartilhamento",cs&&cs.value===false?"o Android informa que não há como compartilhar":"responde")}catch(e){add(false,"Plugin de compartilhamento",em(e))}
-try{var w2=await fs.writeFile({path:"teste-anele.txt",data:btoa("ok"),directory:Directory.Cache});add(true,"Gravar arquivo no aparelho","ok");try{await fs.deleteFile({path:"teste-anele.txt",directory:Directory.Cache})}catch(e){}}catch(e){add(false,"Gravar arquivo no aparelho",em(e))}}
-add(!!navigator.share,"Compartilhamento do navegador",navigator.share?"disponível":"indisponível");add(!!(navigator.clipboard&&navigator.clipboard.writeText),"Copiar texto",navigator.clipboard?"disponível":"indisponível");
+if(nat){var sh=capP("Share");
+if(sh&&sh.canShare){try{var cs=await sh.canShare();add(!!(cs&&cs.value!==false),"Compartilhamento do Android",cs&&cs.value===false?"o Android informa que não há como compartilhar":"disponível")}catch(e){add(false,"Compartilhamento do Android",em(e))}}else add(true,"Compartilhamento do Android","será testado ao enviar (sem verificação prévia)");
+try{var w2=await Filesystem.writeFile({path:"teste-anele.txt",data:btoa("ok"),directory:Directory.Cache});add(true,"Gravar arquivo no aparelho","ok · "+String(w2&&w2.uri||"").slice(0,90))}catch(e){add(false,"Gravar arquivo no aparelho",em(e))}
+try{await Share.share({text:"Teste de compartilhamento do Anelê",dialogTitle:"Teste"});add(true,"Abrir o compartilhamento","ok")}catch(e){add(isCancel(e),"Abrir o compartilhamento",isCancel(e)?"ok (você fechou a janela)":em(e))}}
+else add(!!navigator.share,"Compartilhamento do navegador",navigator.share?"disponível":"indisponível (normal fora do aplicativo)");add(!!(navigator.clipboard&&navigator.clipboard.writeText),"Copiar texto",navigator.clipboard?"disponível":"indisponível");
 try{add(typeof TextEncoder=="function"&&typeof Blob=="function","Gerar arquivos","ok")}catch(e){add(false,"Gerar arquivos",em(e))}
 var bad=L2.some(function(x){return x.indexOf("FALHA")==0});if(r)r.innerHTML=bkCard(!bad,bad?"Há um problema neste aparelho":"Tudo certo",esc(L2.join("\n"))+"\n\nAparelho: "+esc(navigator.userAgent.slice(0,160)))};
 A.bkg=async function(){var r=$("bkr");try{var o=bkBuild(),n="anele-backup-"+bkStamp()+"-v"+APPN+".json",st=await dl(n,new TextEncoder().encode(JSON.stringify(o))),tot=bkTotal(o.contagem);
