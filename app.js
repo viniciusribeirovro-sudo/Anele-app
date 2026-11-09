@@ -68,13 +68,13 @@ function cs(){var e=0,s=0;DB.cash.forEach(function(c){if(c.x)return;c.tp=="entra
 function empty(t){return'<p class="m" style="text-align:center;padding:24px 0">'+t+'</p>'}
 function sb(p){return'<div class="sb">'+ic("search")+'<input data-q="1" placeholder="'+p+'" value="'+esc(Q)+'"></div>'}
 function wa(t,tel){var n=String(tel||"").replace(/\D/g,"");if(n&&n.length<=11)n="55"+n;var u="https://wa.me/"+n+"?text="+encodeURIComponent(t),w=null;if(Capacitor.isNativePlatform()){SP(t,u,n,1);return}try{w=window.open(u,"_blank")}catch(e){}if(!w)SP(t,u)}
-function SP(t,u,n,nat){$("sh").innerHTML='<div class="sc"><b class="h" style="font-size:1.2rem">Compartilhar</b><p class="m">'+(nat?(n?'Envie esta mensagem para o WhatsApp <b>+'+esc(n)+'</b>. Toque em Compartilhar e escolha o WhatsApp, ou copie o texto.':'Toque em Compartilhar e escolha o WhatsApp, ou copie o texto.'):'Toque em Abrir no WhatsApp ou copie o texto.')+'</p><textarea id="bt" rows="6" readonly>'+esc(t)+'</textarea>'+(nat?'':'<a class="bp ac" href="'+esc(u)+'" target="_blank" rel="noopener" style="text-decoration:none">Abrir no WhatsApp</a>')+(navigator.share||nat?'<button class="bp ol" data-a="sn">Compartilhar…</button>':'')+'<button class="bp ol" data-a="cp">Copiar texto</button><button class="bp ol" data-a="x2">Fechar</button></div>';$("sh").hidden=false}
+function SP(t,u,n,nat){$("sh").innerHTML='<div class="sc"><b class="h" style="font-size:1.2rem">Compartilhar</b><p class="m">'+(nat?(n?'Envie esta mensagem para o WhatsApp <b>+'+esc(n)+'</b>. Toque em Abrir no WhatsApp, ou em Compartilhar para escolher o aplicativo, ou copie o texto.':'Toque em Abrir no WhatsApp, ou em Compartilhar para escolher o aplicativo, ou copie o texto.'):'Toque em Abrir no WhatsApp ou copie o texto.')+'</p><textarea id="bt" rows="6" readonly>'+esc(t)+'</textarea>'+'<a class="bp ac" href="'+esc(u)+'" target="_blank" rel="noopener" style="text-decoration:none;text-align:center">Abrir no WhatsApp</a>'+(navigator.share||nat?'<button class="bp ol" data-a="sn">Compartilhar…</button>':'')+'<button class="bp ol" data-a="cp">Copiar texto</button><button class="bp ol" data-a="x2">Fechar</button></div>';$("sh").hidden=false}
 function cl(s){return String(s).replace(/\u00a0/g," ").replace(/[\u2013\u2014\u2212]/g,"-").replace(/[^\x20-\x7e\xa1-\xff]/g,"?")}
 function pR(s,n){s=cl(s).slice(0,n);return s+" ".repeat(n-s.length)}
 function pL(s,n){s=cl(s).slice(0,n);return" ".repeat(n-s.length)+s}
 function money(n){return cl(brl(n))}
 function wrapL(s,n){var r=[];s=cl(s);while(s.length>n){var k=s.lastIndexOf(" ",n);if(k<1)k=n;r.push(s.slice(0,k));s=s.slice(k).replace(/^ /,"")}r.push(s);return r}
-function pdf(lines){var per=56,pg=[],i;for(i=0;i<lines.length;i+=per)pg.push(lines.slice(i,i+per));if(!pg.length)pg.push([""]);
+function pdf(lines){PDFTXT=lines.map(cl).join("\n");var per=56,pg=[],i;for(i=0;i<lines.length;i+=per)pg.push(lines.slice(i,i+per));if(!pg.length)pg.push([""]);
 var ob=["","<< /Type /Catalog /Pages 2 0 R >>","<< /Type /Pages /Kids ["+pg.map(function(_,k){return(5+2*k)+" 0 R"}).join(" ")+"] /Count "+pg.length+" >>","<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>"];
 pg.forEach(function(l,k){var s="BT /F1 10 Tf 13 TL 40 800 Td\n"+l.map(function(x){return"("+cl(x).replace(/([\\()])/g,"\\$1")+") Tj T*"}).join("\n")+"\nET";
 ob[4+2*k]="<< /Length "+s.length+" >>\nstream\n"+s+"\nendstream";
@@ -83,9 +83,23 @@ var o="%PDF-1.4\n",off=[];for(i=1;i<ob.length;i++){off[i]=o.length;o+=i+" 0 obj\
 var x=o.length;o+="xref\n0 "+ob.length+"\n0000000000 65535 f \n";for(i=1;i<ob.length;i++)o+=("0000000000"+off[i]).slice(-10)+" 00000 n \n";
 o+="trailer\n<< /Size "+ob.length+" /Root 1 0 R >>\nstartxref\n"+x+"\n%%EOF";
 var u=new Uint8Array(o.length);for(i=0;i<o.length;i++)u[i]=o.charCodeAt(i)&255;return u}
-async function dl(name,b){
-if(Capacitor.isNativePlatform()){try{var s="",k;for(k=0;k<b.length;k+=8192)s+=String.fromCharCode.apply(null,b.subarray(k,k+8192));var f=await Filesystem.writeFile({path:name,data:btoa(s),directory:Directory.Cache});await Share.share({title:name,url:f.uri,dialogTitle:/\.json$/.test(name)?"Compartilhar backup":"Compartilhar PDF"});return"ok"}catch(e){if(!/cancel/i.test(String(e&&e.message||e))){toast("Não foi possível gerar o arquivo.");return"erro"}return"cancel"}}
-try{var u=URL.createObjectURL(new Blob([b],{type:/\.csv$/.test(name)?"text/csv":/\.json$/.test(name)?"application/json":"application/pdf"})),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);toast("Arquivo gerado.");return"ok"}catch(e){toast("Não foi possível gerar o arquivo neste aparelho.");return"erro"}}
+var PDFTXT="",CAPP={};
+function em(e){return String(e&&e.message||e||"erro desconhecido").slice(0,200)}
+function isCancel(e){return/cancel|abort|dismiss/i.test(String(e&&(e.message||e.name)||e))}
+function capP(n){try{var C=window.Capacitor;if(C&&C.registerPlugin){CAPP[n]=CAPP[n]||C.registerPlugin(n);return CAPP[n]}}catch(e){}return null}
+function b64(b){var s="",k;for(k=0;k<b.length;k+=8192)s+=String.fromCharCode.apply(null,b.subarray(k,k+8192));return btoa(s)}
+/* Entrega de arquivo (PDF, CSV, backup). No APK: grava no cache e abre o compartilhamento do Android (WhatsApp, Drive, e-mail...).
+   Se isso falhar, mostra o motivo e oferece o conteúdo como texto (copiar/compartilhar), em vez de ficar mudo. */
+async function dl(name,b){var isJ=/\.json$/.test(name),isC=/\.csv$/.test(name),mime=isC?"text/csv":isJ?"application/json":"application/pdf",err="";
+if(Capacitor.isNativePlatform()){var uri=null;
+try{var f=await Filesystem.writeFile({path:name,data:b64(b),directory:Directory.Cache});uri=f.uri}catch(e){err="Gravar o arquivo: "+em(e)}
+if(uri){var opts=[{files:[uri]},{url:uri}],last=null,i;for(i=0;i<opts.length;i++){try{await Share.share(Object.assign({title:name,dialogTitle:isJ?"Compartilhar backup":"Compartilhar arquivo"},opts[i]));return"ok"}catch(e){if(isCancel(e))return"cancel";last=e}}err="Compartilhar o arquivo: "+em(last)}
+try{var fl=new File([b],name,{type:mime});if(navigator.canShare&&navigator.canShare({files:[fl]})){await navigator.share({files:[fl],title:name});return"ok"}}catch(e){if(isCancel(e))return"cancel";err+=(err?" | ":"")+"Compartilhamento do navegador: "+em(e)}
+dlFail(name,b,err);return"erro"}
+try{var u=URL.createObjectURL(new Blob([b],{type:mime})),a=document.createElement("a");a.href=u;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(u)},4000);toast("Arquivo gerado.");return"ok"}catch(e){dlFail(name,b,"Download: "+em(e));return"erro"}}
+function dlFail(name,b,err){var isJ=/\.json$/.test(name),isT=isJ||/\.csv$/.test(name),t=isT?new TextDecoder().decode(b).replace(/^\ufeff/,""):PDFTXT;
+$("sh").innerHTML='<div class="sc"><b class="h" style="font-size:1.2rem">Não foi possível enviar o arquivo</b><p class="m">'+(isJ?"O aparelho não deixou gravar ou compartilhar o arquivo. Seus dados continuam salvos. Guarde o backup como texto: copie abaixo e cole em um lugar seguro. Para restaurar, use Restaurar backup > \"Tenho um backup antigo em texto\".":"O aparelho não deixou gravar ou compartilhar o arquivo. Você ainda pode enviar o conteúdo como texto.")+'</p><p class="m" style="word-break:break-word">Detalhe técnico: '+esc(err)+'</p>'+(t?'<textarea id="bt" rows="6" readonly>'+esc(t)+'</textarea><button class="bp" data-a="sn">Compartilhar como texto</button><button class="bp ol" data-a="cp">Copiar texto</button>':"")+'<button class="bp ol" data-a="x2">Fechar</button></div>';$("sh").hidden=false}
+async function shareText(t){try{if(!Capacitor.isNativePlatform()&&!navigator.share)throw new Error("compartilhamento indisponível neste navegador");if(t.length>400000)throw new Error("texto muito grande para compartilhar direto");await Share.share({text:t})}catch(e){if(isCancel(e))return;var m=em(e),ok=false;try{await navigator.clipboard.writeText(t);ok=true}catch(e2){}toast("Não abri o compartilhamento ("+m+"). "+(ok?"O texto foi copiado.":"Use Copiar texto."))}}
 function X(){$("md").hidden=true;$("md").innerHTML=""}
 var PH="",PB=0;
 function pic(f,cb,er){var r=new FileReader(),bad=function(){er("Não consegui ler essa imagem. Use uma foto JPG ou PNG.")};r.onerror=bad;r.onload=function(){var im=new Image();im.onerror=bad;im.onload=function(){var s=Math.min(1,320/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.max(1,Math.round(im.width*s));c.height=Math.max(1,Math.round(im.height*s));c.getContext("2d").drawImage(im,0,0,c.width,c.height);cb(c.toDataURL("image/jpeg",.75))};im.src=r.result};r.readAsDataURL(f)}
@@ -149,7 +163,7 @@ dl("pedido-"+n+".pdf",pdf(R))};
 A.bk=function(){P("Backup","",'<p class="m">Copie este texto e guarde em local seguro (notas, e-mail ou nuvem). Para restaurar, use Restaurar backup.</p><textarea id="bt" rows="10" readonly>'+esc(JSON.stringify({prods:DB.prods,cust:DB.cust,ord:DB.ord,cash:DB.cash,cats:DB.cats,custos:DB.custos}))+'</textarea>','<button class="bp" data-a="cp">Copiar backup</button>')};
 A.cp=function(){var t=$("bt"),ok=false,bad=function(){toast("Não consegui copiar. Segure o texto para copiar.")};t.focus();t.select();try{t.setSelectionRange(0,1e9)}catch(e){}try{ok=document.execCommand("copy")}catch(e){}
 if(ok)return toast("Copiado.");try{navigator.clipboard.writeText(t.value).then(function(){toast("Copiado.")},bad)}catch(e){bad()}};
-A.sn=function(){Share.share({text:$("bt").value}).catch(function(){})};
+A.sn=function(){shareText($("bt").value)};
 A.rs=function(){P("Restaurar backup","",'<p class="m">Cole o texto do backup. Isso substitui todos os dados atuais.</p><textarea id="bt" rows="10"></textarea>','<button class="bp" data-a="rs2">Restaurar</button>')};
 
 /* ===== NOVAS FUNCIONALIDADES (v2) ===== */
@@ -645,7 +659,7 @@ function ljread(){var v=function(i){var e=$(i);return e?e.value:null};if(v("lj_t
 A.ljd=function(i){ljread();var d=(LJ.dias||[]).slice(),k=d.indexOf(+i);if(k>=0)d.splice(k,1);else d.push(+i);LJ.dias=d.sort(function(a,b){return a-b});R()};
 A.ljs=function(){ljread();var b=FS.writeBatch(fdb);b.set(dref("loja","config"),cln(Object.assign({},LJ,{ts:Date.now()})));aud(b,"loja_config","sistema","Configuração da loja online salva");b.commit().catch(fail);toast("Salvo.")};
 A.ljp=function(){ljread();LJ.pub=true;var b=FS.writeBatch(fdb);b.set(dref("loja","config"),cln(Object.assign({},LJ,{ts:Date.now()})));b.commit().then(function(){syncCat(true)}).catch(fail)};
-A.ljw=function(){ljread();Share.share({text:"Faça seu pedido de verduras e legumes na Anelê: "+LJ.urlsite}).catch(function(){})};
+A.ljw=function(){ljread();shareText("Faça seu pedido de verduras e legumes na Anelê: "+LJ.urlsite)};
 /* ----- catálogo público: só nome, preço, foto pequena, categoria e disponível/esgotado ----- */
 function hsh(s){var h=0,i;for(i=0;i<s.length;i+=7)h=(h*31+s.charCodeAt(i))|0;return h+":"+s.length}
 function thumbOf(src){return new Promise(function(res){if(!src)return res("");var k=hsh(src);if(THC[k]!==undefined)return res(THC[k]);var im=new Image(),fb=function(){THC[k]=src.length<30000?src:"";res(THC[k])};im.onload=function(){try{var w=im.width||160,h=im.height||160,s=Math.min(1,160/Math.max(w,h)),c=document.createElement("canvas");c.width=Math.max(1,Math.round(w*s));c.height=Math.max(1,Math.round(h*s));c.getContext("2d").drawImage(im,0,0,c.width,c.height);THC[k]=c.toDataURL("image/jpeg",.72);res(THC[k])}catch(e){fb()}};im.onerror=fb;im.src=src})}
@@ -786,7 +800,7 @@ A.vde=function(i){var v=g(DB.vendedores,i);if(!v||!can("vend.ger"))return;F("Edi
 if(n==v.n&&t==v.tel){X();return}var ch=[];if(n!=v.n)ch.push(chg("nome",v.n,n));if(t!=v.tel)ch.push(chg("WhatsApp",fmtTel(v.tel),fmtTel(t)));var b=FS.writeBatch(fdb);b.update(dref("vendedores",i),{n:n,tel:t,ts:Date.now(),by:me.n});aud(b,"vendedor_editado","sistema","Vendedor "+v.n+" alterado",{ch:ch});b.commit().then(function(){toast(t!=v.tel?"Salvo. Pedidos antigos continuam com o número que valia na época.":"Salvo.")}).catch(fail);X();R()})};
 A.vdt=function(i){var v=g(DB.vendedores,i);if(!v||!can("vend.ger"))return;var on=!v.ativo;if(!on&&!confirm("Desativar "+v.n+"? O link dele deixa de aceitar novos pedidos."))return;var b=FS.writeBatch(fdb);b.update(dref("vendedores",i),{ativo:on,ts:Date.now(),by:me.n});aud(b,on?"vendedor_ativado":"vendedor_desativado","sistema","Vendedor "+v.n+(on?" ativado":" desativado"));b.commit().then(function(){toast(on?"Vendedor ativado.":"Vendedor desativado.")}).catch(fail)};
 A.vdc=function(i){var l=vlink(i);if(l)copyTxt(l,"Link copiado.")};
-A.vds=function(i){var v=g(DB.vendedores,i),l=vlink(i);if(!v||!l)return;Share.share({text:"Faça seu pedido de verduras e legumes na Anelê: "+l}).catch(function(){})};
+A.vds=function(i){var v=g(DB.vendedores,i),l=vlink(i);if(!v||!l)return;shareText("Faça seu pedido de verduras e legumes na Anelê: "+l)};
 A.wv=function(i,v){WV=v||"todos";$("lst").innerHTML=L.site()};
 function wvf(w){return WV=="todos"||(WV=="geral"?!w.vend:w.vend===WV)}
 function wvsel(){var l=DB.vendedores||[];if(!l.length&&!DB.pedidosweb.some(function(w){return w.vend}))return"";var o=[["todos","Todos os vendedores"],["geral","Link geral (sem vendedor)"]].concat(l.map(function(v){return[v.id,v.n]}));return'<label style="margin:0 0 10px"><select data-c="wv" data-i="x">'+o.map(function(x){return'<option value="'+esc(x[0])+'"'+(WV==x[0]?" selected":"")+'>'+esc(x[1])+'</option>'}).join("")+'</select></label>'}
@@ -799,12 +813,21 @@ function vcmp(a,b){var x=vparse(a),y=vparse(b),i;if(!x||!y)return 0;for(i=0;i<3;
 /* ----- backup: arquivo .json com data, hora e versão ----- */
 function p2(n){return(n<10?"0":"")+n}
 function bkStamp(){var d=new Date();return d.getFullYear()+"-"+p2(d.getMonth()+1)+"-"+p2(d.getDate())+"_"+p2(d.getHours())+p2(d.getMinutes())}
-var BKKEYS=[["veiculos","Veículos"],["expedicoes","Planejamentos de expedição"],["geo","Localizações de endereços"],["prods","Produtos"],["cust","Clientes"],["ord","Pedidos"],["cash","Movimentos de caixa"],["cats","Categorias"],["custos","Custos"],["vendedores","Vendedores do site"],["fcats","Categorias financeiras"],["pagar","Contas a pagar"],["cobr","Cobranças mensais"],["fin","Configuração financeira"]];
+var BKKEYS=[["veiculos","Veículos"],["expedicoes","Planejamentos de expedição"],["geo","Localizações de endereços"],["prods","Produtos"],["cust","Clientes"],["ord","Pedidos"],["cash","Movimentos de caixa"],["cats","Categorias"],["custos","Custos"],["vendedores","Vendedores do site"],["sep","Separação por pedido"],["funcoes","Funções e permissões"],["pedidosweb","Pedidos do site aguardando aprovação"],["catalogo","Catálogo do site"],["fcats","Categorias financeiras"],["pagar","Contas a pagar"],["cobr","Cobranças mensais"],["fin","Configuração financeira"]];
 function bkBuild(){var D={},c={};BKKEYS.forEach(function(k){D[k[0]]=DB[k[0]]||[];c[k[0]]=D[k[0]].length});return{tipo:"anele-backup",formato:1,app:{nome:"Anelê Gestão",versao:APPN,build:APPV},loja:String(LIC.nome||firebaseConfig.projectId||""),projeto:String(firebaseConfig.projectId||""),geradoEm:new Date().toISOString(),contagem:c,dados:D}}
 function bkTotal(c){var t=0;Object.keys(c).forEach(function(k){t+=c[k]});return t}
 function bkLast(){try{return JSON.parse(localStorage.getItem("anele_lastbk"))}catch(e){return null}}
 function bkCard(ok,tit,txt){return'<div class="c" style="border-color:'+(ok?"var(--gn,#5a9a6a)":"#d0665a")+'"><b>'+tit+'</b><div class="m" style="margin-top:6px;white-space:pre-wrap">'+txt+'</div></div>'}
-A.bk=function(){var lb=bkLast();P("Backup","",'<p class="m">O backup é um arquivo .json com produtos, clientes, pedidos, caixa, categorias e custos. Guarde em um lugar seguro (Google Drive, e-mail ou WhatsApp). Usuários e senhas não entram no backup.</p><div class="c"><div class="m">Último backup feito neste aparelho</div>'+(lb?'<b>'+esc(lb.n)+'</b><div class="m">'+esc(lb.dt)+' · versão '+esc(lb.v)+' · '+lb.c+' registros</div>':'<b>Nenhum ainda</b>')+'</div><div id="bkr"></div>','<button class="bp" data-a="bkg">Gerar e compartilhar backup</button><button class="bp ol" data-a="rs">Restaurar um backup</button>')};
+A.bk=function(){var lb=bkLast();P("Backup","",'<p class="m">O backup é um arquivo .json com produtos, clientes, pedidos, caixa, categorias e custos. Guarde em um lugar seguro (Google Drive, e-mail ou WhatsApp). Usuários e senhas não entram no backup.</p><div class="c"><div class="m">Último backup feito neste aparelho</div>'+(lb?'<b>'+esc(lb.n)+'</b><div class="m">'+esc(lb.dt)+' · versão '+esc(lb.v)+' · '+lb.c+' registros</div>':'<b>Nenhum ainda</b>')+'</div><div id="bkr"></div>','<button class="bp" data-a="bkg">Gerar e compartilhar backup</button><button class="bp ol" data-a="rs">Restaurar um backup</button><button class="bp ol" data-a="dgn">Testar arquivos e compartilhamento</button>')};
+A.dgn=async function(){var r=$("bkr"),L2=[],nat=Capacitor.isNativePlatform();if(r)r.innerHTML=bkCard(1,"Testando…","Aguarde alguns segundos.");
+function add(ok,n,t){L2.push((ok?"OK  ":"FALHA ")+n+(t?": "+t:""))}
+add(true,"Ambiente",(nat?"aplicativo Android (APK)":"navegador")+" · versão "+APPN+" ("+APPV+")");
+if(nat){var sh=capP("Share"),fs=capP("Filesystem");
+try{var cs=await sh.canShare();add(!!(cs&&cs.value!==false),"Plugin de compartilhamento",cs&&cs.value===false?"o Android informa que não há como compartilhar":"responde")}catch(e){add(false,"Plugin de compartilhamento",em(e))}
+try{var w2=await fs.writeFile({path:"teste-anele.txt",data:btoa("ok"),directory:Directory.Cache});add(true,"Gravar arquivo no aparelho","ok");try{await fs.deleteFile({path:"teste-anele.txt",directory:Directory.Cache})}catch(e){}}catch(e){add(false,"Gravar arquivo no aparelho",em(e))}}
+add(!!navigator.share,"Compartilhamento do navegador",navigator.share?"disponível":"indisponível");add(!!(navigator.clipboard&&navigator.clipboard.writeText),"Copiar texto",navigator.clipboard?"disponível":"indisponível");
+try{add(typeof TextEncoder=="function"&&typeof Blob=="function","Gerar arquivos","ok")}catch(e){add(false,"Gerar arquivos",em(e))}
+var bad=L2.some(function(x){return x.indexOf("FALHA")==0});if(r)r.innerHTML=bkCard(!bad,bad?"Há um problema neste aparelho":"Tudo certo",esc(L2.join("\n"))+"\n\nAparelho: "+esc(navigator.userAgent.slice(0,160)))};
 A.bkg=async function(){var r=$("bkr");try{var o=bkBuild(),n="anele-backup-"+bkStamp()+"-v"+APPN+".json",st=await dl(n,new TextEncoder().encode(JSON.stringify(o))),tot=bkTotal(o.contagem);
 if(st=="ok"){try{localStorage.setItem("anele_lastbk",JSON.stringify({n:n,dt:hoje(),v:APPN,c:tot}))}catch(e){}var b=FS.writeBatch(fdb);aud(b,"backup_gerado","sistema","Backup gerado ("+tot+" registros, versão "+APPN+")");b.commit().catch(function(){});if(r)r.innerHTML=bkCard(1,"Backup concluído",esc(n)+"\n"+tot+" registros · versão "+esc(APPN));toast("Backup concluído.")}
 else if(st=="cancel"){if(r)r.innerHTML=bkCard(0,"Backup não enviado","O compartilhamento foi cancelado. Toque em Gerar de novo e escolha onde guardar o arquivo.");toast("Compartilhamento cancelado.")}
@@ -909,7 +932,10 @@ var HSEED={"5.0":[
 "5.8":[
 {t:"Logística: rotas pelas ruas, distância e tempo",d:"O mapa agora mostra o trajeto real pelas ruas (OpenStreetMap/OSRM) em vez de linhas retas. Cada veículo mostra entregas, distância total e tempo estimado, além de distância e tempo entre as paradas. O tempo é uma estimativa sem trânsito em tempo real.",im:[]},
 {t:"Otimização automática da sequência",d:"A melhor ordem das entregas de cada veículo é calculada sozinha e recalculada quando você adiciona, move ou remove pedidos. Dá para reorganizar manualmente e pedir para recalcular. Há também a distribuição por proximidade entre os veículos.",im:[]},
-{t:"Retorno à origem e layout",d:"Cada rota pode terminar na última entrega ou voltar à origem, e isso muda a distância e o tempo. Telas da Logística com espaçamentos e cartões reorganizados.",im:[]}]};
+{t:"Retorno à origem e layout",d:"Cada rota pode terminar na última entrega ou voltar à origem, e isso muda a distância e o tempo. Telas da Logística com espaçamentos e cartões reorganizados.",im:[]}],
+"5.9":[
+{t:"Correção: PDF, WhatsApp e backup",d:"Arquivos (PDF, CSV, backup) agora têm vários caminhos de envio e, se o aparelho recusar, o app mostra o motivo e oferece o conteúdo como texto para copiar ou compartilhar. O botão Abrir no WhatsApp aparece também no aplicativo.",im:[]},
+{t:"Backup mais completo e teste do aparelho",d:"O backup inclui separação por pedido, funções, pedidos do site aguardando e catálogo. Em Backup há o botão Testar arquivos e compartilhamento, que mostra o que o aparelho permite.",im:[]}]};
 function hseed(){var v=vparse(APPN),k=v?v[0]+"."+v[1]:"",l=HSEED[k]||HSEED["5.1"];return{id:"",v:v?APPN:"",dt:todayI(),pub:false,itens:JSON.parse(JSON.stringify(l))}}
 A.hs=function(){HE=hseed();hfm()};
 A.hai=function(){hsync();HE.itens.push({t:"",d:"",im:[]});hfm()};
