@@ -240,7 +240,7 @@ return{m:m,top:ks.filter(function(k){var p=g(DB.prods,k);return p&&act(p)}).sort
 L.prod=function(){var q=nrm(Q),l=DB.prods.filter(function(p){return(!PLOW||p.st<=3)&&(!q||nrm(pn(p)+" "+catName(p)+" "+(p.sku||"")).indexOf(q)>=0)}),last,h="";
 l=l.slice().sort(function(a,b){return String(catName(a)).localeCompare(String(catName(b)))||nm(a,b)});
 l.forEach(function(p){var rs=resv(p.id),cn=catName(p);if(cn!==last){last=cn;h+='<div class="m" style="margin:14px 2px 8px"><b>'+esc(last||"Sem categoria")+'</b></div>'}
-h+='<div class="c r'+(can("prod.preco")?' tap':'')+'"'+(can("prod.preco")?' data-a="np" data-i="'+p.id+'"':'')+(act(p)?'':' style="opacity:.55"')+'><div class="it">'+thumb(p.img)+'<div><b>'+esc(pn(p))+'</b><div class="m">'+brl(p.pr)+' · estoque '+qf(p.st)+(rs?' · reservado '+qf(rs):'')+(p.sku?' · '+esc(p.sku):'')+(act(p)?'':' · inativo')+(p.opc?' · personalizável':'')+'</div>'+''+'</div></div><div style="display:flex">'+(can("prod.estoque")?'<button class="cb" data-a="mv" data-i="'+p.id+'" aria-label="Movimentações">'+ic("list")+'</button>':'')+'<button class="cb" data-a="wp" data-i="'+p.id+'" aria-label="WhatsApp">'+ic("chat")+'</button></div></div>'});
+h+='<div class="c r'+(can("prod.preco")?' tap':'')+'"'+(can("prod.preco")?' data-a="np" data-i="'+p.id+'"':'')+(act(p)?'':' style="opacity:.55"')+'><div class="it">'+thumb(p.img)+'<div><b>'+esc(pn(p))+'</b><div class="m">'+brl(p.pr)+' · estoque '+qf(p.st)+(rs?' · reservado '+qf(rs):'')+(p.sku?' · '+esc(p.sku):'')+(act(p)?'':' · inativo')+(p.opc?' · personalizável':'')+'</div>'+''+'</div></div><div class="pa">'+(can("prod.estoque")?'<button class="cb" data-a="mv" data-i="'+p.id+'" aria-label="Movimentações">'+ic("list")+'</button>':'')+'<button class="cb" data-a="wp" data-i="'+p.id+'" aria-label="WhatsApp">'+ic("chat")+'</button></div></div>'});
 return h||empty("Nenhum produto. Toque em + para cadastrar"+".")};
 V.prod=function(){return sb("Buscar produto")+(PLOW?'<div class="tb"><button class="chip on" data-a="plx">Estoque baixo ✕</button></div>':'')+'<div id="lst">'+L.prod()+'</div>'};
 /* ===== v9: produto personalizável — configuração no cadastro do produto (prods.opc = {mn,mx,l:[{i,n,a,on,p?,u?}]}) ===== */
@@ -739,7 +739,7 @@ function payCash(o,p,part){return{ts:uid(),tp:"entrada",v:p.v,d:"Pedido #"+num(o
 function ordPut(o,patch,extra,act,desc,ch){var b=FS.writeBatch(fdb);Object.assign(o,patch);o.s=sMir(o);b.update(dref("ord",o.id),Object.assign({},patch,{s:o.s,ub:me.n,ut:Date.now()}));if(extra)extra(b);aud(b,act,"pedido",desc,{ref:o.id,num:num(o.id),ch:ch});b.commit().catch(fail)}
 function pills(o){if(canc(o))return'<div class="pl"><span class="pill st-cancelado">cancelado</span></div>';var l=lgS(o),f=fnS(o);return'<div class="pl"><span class="pk">Logística</span><span class="pill lg-'+l+'">'+LGC[l]+'</span></div><div class="pl"><span class="pk">Financeiro</span><span class="pill fn-'+f+'">'+FNL[f]+'</span></div>'}
 function ofl(){var c=function(a,cur,v,l){return'<button class="chip'+(cur==v?" on":"")+'" data-a="'+a+'" data-i="'+v+'">'+l+'</button>'};
-return'<div class="tb"><span class="m" style="align-self:center">Logística</span>'+c("fl",flt,"todos","todos")+LG.map(function(x){return c("fl",flt,x[0],LGC[x[0]])}).join("")+c("fl",flt,"cancelado","cancelado")+'</div><div class="tb"><span class="m" style="align-self:center">Financeiro</span>'+c("ff",ffn,"todos","todos")+["aberto","parcial","pago","vencido"].map(function(k){return c("ff",ffn,k,FNL[k])}).join("")+'</div>'}
+return'<div class="fr"><span class="fl">Logística</span><div class="tb">'+c("fl",flt,"todos","todos")+LG.map(function(x){return c("fl",flt,x[0],LGC[x[0]])}).join("")+c("fl",flt,"cancelado","cancelado")+'</div></div><div class="fr"><span class="fl">Financeiro</span><div class="tb">'+c("ff",ffn,"todos","todos")+["aberto","parcial","pago","vencido"].map(function(k){return c("ff",ffn,k,FNL[k])}).join("")+'</div></div>'}
 A.ff=function(i){ffn=i;R()};
 function ofk(o){return(flt=="todos"||(flt=="cancelado"?canc(o):!canc(o)&&lgS(o)==flt))&&(ffn=="todos"||(!canc(o)&&fnS(o)==ffn))}
 function ofin(eo){return'<label>Vencimento do pagamento (opcional)<input id="f_vc" type="date" value="'+esc(eo&&eo.vc||"")+'"></label>'+(eo?'':'<label>Logística<select id="f_lg">'+LG.map(function(x){return'<option value="'+x[0]+'">'+x[1]+'</option>'}).join("")+'</select></label><label>Financeiro<select id="f_fn"><option value="aberto">Em aberto (ainda não recebi)</option><option value="pago">Pago (recebido por inteiro)</option></select></label><div class="m" style="margin:-6px 0 12px">Pagamento parcial se registra depois, dentro do pedido.</div>')}
@@ -1611,7 +1611,7 @@ A.lxdup=function(i){var e=g(DB.expedicoes,i);if(!e)return;X();MAPSRC=null;LP=lxD
 
 /* ---- tela principal da Logística (layout) ---- */
 V.log=function(){if(!can("log.ver"))return empty("Sem permissão.");var C=lgCounts();
-var h='<div class="lpr" style="margin:0 0 14px">'+[["plan","Planejar"],["rotas","Rotas"],["veic","Veículos"],["hist","Histórico"]].map(function(x){return'<button class="chip'+(LGS==x[0]?" on":"")+'" data-a="lxs" data-i="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>";
+var h='<div class="tb">'+[["plan","Planejar"],["rotas","Rotas"],["veic","Veículos"],["hist","Histórico"]].map(function(x){return'<button class="chip'+(LGS==x[0]?" on":"")+'" data-a="lxs" data-i="'+x[0]+'">'+x[1]+"</button>"}).join("")+"</div>";
 h+='<div class="lgs"><div class="c"><b>'+C.pr+'</b><span class="m">Prontos para entrega</span></div><div class="c"><b>'+C.aw+'</b><span class="m">Aguardando planejamento</span></div><div class="c"><b>'+C.em+'</b><span class="m">Em rotas ativas</span></div><div class="c"><b>'+C.ve+'</b><span class="m">Veículos ativos</span></div></div>';
 if(LGS=="plan")h+='<div class="lpr" style="margin:0 0 10px"><button class="chip'+(LGF.d=="hoje"?" on":"")+'" data-a="lxd" data-i="hoje">Hoje</button><button class="chip'+(LGF.d=="amanha"?" on":"")+'" data-a="lxd" data-i="amanha">Amanhã</button><button class="chip'+(LGF.d=="todas"?" on":"")+'" data-a="lxd" data-i="todas">Todas</button></div><label class="lgd"><span class="m">Ou escolha uma data de entrega</span><input type="date" data-c="lxdt" value="'+esc(LGF.d=="data"?LGF.dt:"")+'"></label><div style="margin:0 0 14px">'+sb("Buscar por cliente, pedido ou bairro")+"</div>";
 return h+'<div id="lst" class="lgl">'+L.log()+"</div>"};
@@ -1681,3 +1681,28 @@ dl("sacolas-"+SPF.a+"_"+SPF.b+".pdf",pdf(L2))};
 /* Carga do veículo: ordem inversa da entrega (última entrega entra primeiro), com cliente, telefone e itens de cada sacola. */
 function lxCarga(e,r,k){var L2=["CARGA DO VEICULO "+(k+1)+" - "+r.vn+" - expedição de "+fd(e.dt),r.mt?"Motorista: "+r.mt:"","Carregue na ordem inversa: a última entrega entra primeiro.",""];for(var j=r.ps.length-1;j>=0;j--){var p=r.ps[j],it=itensTxt(g(DB.ord,p.oid));L2.push("[ ] PARADA "+(j+1)+" - SACOLA #"+p.n+" - "+String(p.cl||"").toUpperCase());L2.push("    Tel.: "+(p.tel||"-"));L2.push("    "+p.ad);if(it)L2.push("    Itens: "+it);L2.push("")}return L2.join("\n")}
 A.lxcg=function(i){var x=lxPick(i);if(x)dl("carga-"+x.e.dt+"-veiculo"+(x.k+1)+".pdf",pdf(lxLines(lxCarga(x.e,x.r,x.k))))};
+
+
+/* ===== v15: alinhamento e espaçamento padronizados (só CSS e estrutura; sem mudar cores, textos ou funções) =====
+   Causa dos desalinhamentos: a regra ".r{flex-wrap:wrap}" fazia o item da direita (preço, ícones, seta, situação) cair para a
+   linha de baixo sempre que o texto da esquerda era longo. Agora a linha NÃO quebra: o texto da esquerda é que encolhe e quebra
+   dentro do próprio espaço, e o item da direita mantém posição fixa. ".r.wr" mantém o comportamento antigo onde faz sentido. */
+(function(){var e=document.createElement("style");e.id="v15";e.textContent=[
+".r{flex-wrap:nowrap;align-items:center}",
+".r>:first-child{min-width:0}",
+".r>:not(:first-child){flex-shrink:0;max-width:62%}",
+".r.wr{flex-wrap:wrap}",
+/* filtros do Pedidos: título numa coluna de largura fixa e filtros ao lado, centralizados na vertical */
+".fr{display:flex;align-items:center;gap:10px;margin-bottom:14px}",
+".fr>.fl{flex:none;width:5.6rem;color:var(--mu);font-size:.9rem;line-height:1.2}",
+".fr>.tb{flex:1;min-width:0;margin:0;align-items:center}",
+/* produtos: área reservada para as ações, sempre no mesmo lugar */
+".pa{display:flex;flex:none;align-items:center;justify-content:flex-end;gap:2px;min-width:6.2rem}",
+/* espaçamento entre blocos */
+".gr{margin-bottom:12px}.gr:last-child{margin-bottom:0}",
+".bp+.c,.bp+.tb,.bp+.gr,.tb+.c{margin-top:12px}",
+".gr+.c,.gr+.tb,.gr3+.c{margin-top:0}",
+".pl .pk{flex:none}.pl .pill{min-width:7.6rem;text-align:center}",
+/* indicadores em 3 colunas no celular (antes sobrava um cartão sozinho na linha de baixo) */
+".gr3{grid-template-columns:repeat(auto-fit,minmax(min(100%,5.6rem),1fr))}.gr3 .c{padding:.7rem .6rem}"
+].join("\n");document.head.appendChild(e)})();
